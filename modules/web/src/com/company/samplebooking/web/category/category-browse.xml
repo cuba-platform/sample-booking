@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/window.xsd"
+        caption="msg://browseCaption"
+        class="com.company.samplebooking.web.category.CategoryBrowse"
+        focusComponent="categoriesTable"
+        lookupComponent="categoriesTable"
+        messagesPack="com.company.samplebooking.web.category">
+    <dsContext>
+        <collectionDatasource id="categoriesDs"
+                              class="com.company.samplebooking.entity.Category"
+                              view="_local">
+            <query>
+                <![CDATA[select e from booking$Category e]]>
+            </query>
+        </collectionDatasource>
+    </dsContext>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="categoriesTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="categoriesTable"
+                datasource="categoriesDs">
+            <properties include=".*"/>
+        </filter>
+        <table id="categoriesTable"
+               width="100%">
+            <actions>
+                <action id="create"
+                        openType="DIALOG"/>
+                <action id="edit"
+                        openType="DIALOG"/>
+                <action id="remove"/>
+            </actions>
+            <columns>
+                <column id="name"/>
+            </columns>
+            <rows datasource="categoriesDs"/>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn"
+                        action="categoriesTable.create"/>
+                <button id="editBtn"
+                        action="categoriesTable.edit"/>
+                <button id="removeBtn"
+                        action="categoriesTable.remove"/>
+            </buttonsPanel>
+        </table>
+    </layout>
+</window>

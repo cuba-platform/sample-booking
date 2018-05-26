@@ -1,0 +1,54 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html"> 
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html"> 
+<link rel="import" href="../../bower_components/cuba-app/cuba-localize-behavior.html"> 
+<link rel="import" href="../../bower_components/cuba-ui/cuba-entity-list-view-behavior.html"> 
+<link rel="import" href="../../bower_components/cuba-data/cuba-entities.html"> 
+<link rel="import" href="../../bower_components/cuba-styles/cuba-styles.html"> 
+<link rel="import" href="../../bower_components/paper-card/paper-card.html"> 
+<link rel="import" href="../../bower_components/paper-button/paper-button.html"> 
+<link rel="import" href="../shared-styles.html"> 
+<dom-module id="booking-resource-list"> 
+  <template> 
+    <style include="cuba-styles"></style> 
+    <style include="shared-styles"></style> 
+    <style>
+      :host {
+        display: block;
+      }
+      paper-card {
+        cursor: pointer;
+      }
+    </style> 
+    <cuba-entities id="data" entity-name="booking$Resource" data="{{entities}}" view="resource-view" loading="{{dataLoading}}" limit="10" provide-count="true" count="{{entitiesCount}}" auto="[[active]]"> 
+    </cuba-entities> 
+    <iron-selector id="selector" on-iron-activate="_handleSelectionChange"> 
+      <template id="entitiesList" is="dom-repeat" items="{{entities}}"> 
+        <paper-card heading="[[item.name]]" on-tap="_handleItemTap" class="page-widget"> 
+          <div class="card-content">
+            [[item.category._instanceName]]
+            <br> 
+          </div> 
+        </paper-card> 
+      </template> 
+    </iron-selector> 
+    <paper-button on-tap="_loadMore" class="load-more" hidden$="[[!moreDataAvailable]]">
+       [[msg('Load more')]] 
+    </paper-button> 
+  </template> 
+  <script>
+    {
+      /**
+       * @extends {Polymer.Element}
+       * @appliesMixin CubaLocalizeBehavior
+       * @appliesMixin CubaEntityListViewBehavior
+       */
+      class BookingResourceList extends Polymer.mixinBehaviors([CubaLocalizeBehavior, CubaEntityListViewBehavior], Polymer.Element) {
+
+        static get is() { return 'booking-resource-list' }
+
+      }
+
+      customElements.define(BookingResourceList.is, BookingResourceList);
+    }
+  </script> 
+</dom-module>

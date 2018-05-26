@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<screen-config xmlns="http://schemas.haulmont.com/cuba/screens.xsd">
+    <include file="com/company/samplebooking/screens.xml"/>
+    <screen id="booking$Category.browse"
+            template="com/company/samplebooking/web/category/category-browse.xml"/>
+    <screen id="booking$Category.edit"
+            template="com/company/samplebooking/web/category/category-edit.xml"/>
+    <screen id="booking$Resource.browse"
+            template="com/company/samplebooking/web/resource/resource-browse.xml"/>
+    <screen id="booking$Resource.edit"
+            template="com/company/samplebooking/web/resource/resource-edit.xml"/>
+    <screen id="booking$Booking.browse"
+            template="com/company/samplebooking/web/booking/booking-browse.xml"/>
+    <screen id="booking$Booking.edit"
+            template="com/company/samplebooking/web/booking/booking-edit.xml"/>
+</screen-config>

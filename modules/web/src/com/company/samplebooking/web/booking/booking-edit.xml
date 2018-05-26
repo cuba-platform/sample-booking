@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/window.xsd"
+        caption="msg://editorCaption"
+        class="com.company.samplebooking.web.booking.BookingEdit"
+        datasource="bookingDs"
+        focusComponent="fieldGroup"
+        messagesPack="com.company.samplebooking.web.booking">
+    <dsContext>
+        <datasource id="bookingDs"
+                    class="com.company.samplebooking.entity.Booking"
+                    view="booking-view"/>
+    </dsContext>
+    <dialogMode forceDialog="true"
+                height="AUTO"
+                width="600"/>
+    <layout spacing="true">
+        <fieldGroup id="fieldGroup"
+                    datasource="bookingDs"
+                    width="100%">
+            <column width="100%">
+                <field property="name"/>
+                <field property="beginning"/>
+                <field property="ending"/>
+                <field property="resource"/>
+                <field editable="false"
+                       property="owner"/>
+            </column>
+        </fieldGroup>
+        <frame id="windowActions"
+               screen="editWindowActions"/>
+    </layout>
+</window>

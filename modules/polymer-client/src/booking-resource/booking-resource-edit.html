@@ -1,0 +1,71 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html"> 
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html"> 
+<link rel="import" href="../../bower_components/paper-button/paper-button.html"> 
+<link rel="import" href="../../bower_components/paper-card/paper-card.html"> 
+<link rel="import" href="../../bower_components/cuba-app/cuba-localize-behavior.html"> 
+<link rel="import" href="../../bower_components/cuba-ui/cuba-entity-edit-view-behavior.html"> 
+<link rel="import" href="../../bower_components/cuba-data/cuba-entity.html"> 
+<link rel="import" href="../../bower_components/cuba-form/cuba-entity-form.html"> 
+<link rel="import" href="../../bower_components/cuba-styles/cuba-styles.html"> 
+<link rel="import" href="../../bower_components/paper-input/paper-input.html"> 
+<link rel="import" href="../../bower_components/cuba-ui/cuba-lookup.html"> 
+<link rel="import" href="../../bower_components/cuba-data/cuba-entities.html"> 
+<link rel="import" href="../../bower_components/vaadin-combo-box/vaadin-combo-box.html"> 
+<link rel="import" href="../shared-styles.html"> 
+<dom-module id="booking-resource-edit"> 
+  <template> 
+    <style include="cuba-styles"></style> 
+    <style include="shared-styles"></style> 
+    <style>
+      paper-card {
+        display: block;
+      }
+    </style> 
+    <cuba-entity entity-name="booking$Resource" entity-id="[[entityId]]" view="resource-view" data="{{entity}}"></cuba-entity> 
+    <cuba-entity-form id="form" entity-name="booking$Resource" entity="{{entity}}" on-cuba-form-response="_onSuccess" on-cuba-form-error="_onError" server-errors="{{serverErrors}}"> 
+      <paper-card> 
+        <div class="card-content"> 
+          <paper-input value="{{entity.name}}" label="[[msg('booking$Resource.name')]]" required maxlength="50" error-message="[[serverErrors.name]]" invalid="[[_isInvalid(serverErrors.name)]]"> 
+          </paper-input> 
+          <cuba-lookup picked-entity="{{entity.category}}"> 
+            <div slot="dropdown"> 
+              <cuba-entities entity-name="booking$Category" view="_minimal" data="{{entity_categoryOptions}}"></cuba-entities> 
+              <vaadin-combo-box label="[[msg('booking$Resource.category')]]" items="[[entity_categoryOptions]]" selected-item="{{entity.category}}" item-label-path="_instanceName" item-value-path="id" value="[[entity.category.id]]" required error-message="[[serverErrors.category]]" invalid="[[_isInvalid(serverErrors.category)]]"> 
+              </vaadin-combo-box> 
+            </div> 
+          </cuba-lookup> 
+        </div> 
+        <div class="card-actions"> 
+          <paper-button on-tap="_delete" hidden$="[[!entityId]]">
+             [[msg('Delete')]] 
+          </paper-button> 
+          <paper-button on-tap="_cancel">
+             [[msg('Cancel')]] 
+          </paper-button> 
+          <paper-button on-tap="_save">
+             [[msg('Save')]] 
+          </paper-button> 
+        </div> 
+      </paper-card> 
+    </cuba-entity-form> 
+    <paper-toast id="errorMessage" horizontal-align="right">
+      [[msg('Failed to save')]]
+    </paper-toast> 
+  </template> 
+  <script>
+    {
+      /**
+       * @extends {Polymer.Element}
+       * @appliesMixin CubaLocalizeBehavior
+       * @appliesMixin CubaEntityEditViewBehavior
+       */
+      class BookingResourceEdit extends Polymer.mixinBehaviors([CubaLocalizeBehavior, CubaEntityEditViewBehavior], Polymer.Element) {
+
+        static get is() { return 'booking-resource-edit'; }
+
+      }
+
+      customElements.define(BookingResourceEdit.is, BookingResourceEdit);
+    }
+  </script> 
+</dom-module>

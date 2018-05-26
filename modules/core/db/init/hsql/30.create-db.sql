@@ -1,0 +1,51 @@
+-- begin "User" role
+
+insert into SEC_ROLE
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, NAME, LOC_NAME, DESCRIPTION, ROLE_TYPE, IS_DEFAULT_ROLE)
+values ('87d107a6-c84d-28f8-9d2c-1081436ce099', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 'User', null, null, 0, true);
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('aed081cc-03a0-4cb3-cdaf-24e316af269d', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Category:delete', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+о за забвение может быть инициировано исключительно самим пользователям. А тут за пользователя решают
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('7766fac5-da62-af42-f018-abe94e8c833d', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 10, 'logWindow', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('359f11fa-c722-2f0b-a94f-cef0c14af95c', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Resource:delete', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('331ef9bc-3194-118b-500c-0f74441a8b69', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Category:create', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('8b588cc3-519b-30c1-ba95-53eaaf7f61a9', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Resource:create', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('eec00217-540f-24a2-6798-0b80303ba1e0', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Resource:update', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('22023892-278d-32f8-dca1-91677aa181e8', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Category:read', 1, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('4670b464-fc28-c7fa-351f-cd6a215c8393', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 10, 'printDomain', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('60904961-d267-63b4-a24f-89fdfeec0471', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Category:update', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('2be7c61f-c6a2-d178-d1b5-5f817ddf47c6', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 10, 'administration', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+insert into SEC_PERMISSION
+(ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
+values ('6ef2234f-fada-2e22-4fff-45c2b59fbf28', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Resource:read', 1, '87d107a6-c84d-28f8-9d2c-1081436ce099');
+
+-- end "User" role

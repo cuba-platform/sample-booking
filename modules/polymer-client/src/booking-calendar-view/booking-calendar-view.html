@@ -1,0 +1,431 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../shared-styles.html">
+<link rel="import" href="../booking-events-calendar/booking-events-calendar.html">
+<link rel="import" href="../../bower_components/cuba-data/cuba-entity.html">
+<link rel="import" href="../../bower_components/cuba-data/cuba-service.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/datetime-picker/datetime-picker.html">
+
+<dom-module id="booking-calendar-view">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      booking-events-calendar {
+        height: 32em;
+      }
+
+      h3 {
+        opacity: 0.7;
+      }
+
+      paper-input {
+        width: 21em;
+      }
+
+      .booking-time {
+        display: flex;
+        align-items: center;
+      }
+
+      .booking-time.margin-bottom {
+        margin-bottom: 0.5em;
+      }
+
+      .booking-time span {
+        width: 100%;
+      }
+
+      .booking-time datetime-picker {
+        flex: 1;
+      }
+
+      datetime-picker {
+        --input-picker-color: var(--primary-text-color);
+        --input-picker-background: var(--primary-background-color);
+      }
+
+      .card-actions {
+        text-align: right;
+      }
+    </style>
+
+    <cuba-entity id="resourceData"
+                 entity-name="booking$Resource"
+                 entity-id="[[_resourceId]]"
+                 view="resource-view"
+                 auto="false"
+                 data="{{_resource}}">
+    </cuba-entity>
+
+    <cuba-service id="bookingsData"
+                  service-name="booking_BookingsLoadService"
+                  method="fetch"
+                  data="{{fetchedBookings}}"
+                  auto="false"
+                  params="[[_getFetchParams(_resource)]]">
+    </cuba-service>
+
+    <h3>[[_resource.name]]</h3>
+
+    <booking-events-calendar id="eventCalendar"
+                             events="{{_resourceBookings}}">
+    </booking-events-calendar>
+
+    <paper-dialog id="editBookingDialog">
+      <h2>[[_dialogCaption]]</h2>
+
+      <paper-input value="{{_event.title}}"
+                   label="[[msg('booking$Booking.name')]]"
+                   readonly$="[[!_editAllowed]]"
+                   required>
+      </paper-input>
+
+      <div class="booking-time margin-bottom">
+            <span>
+              [[msg('booking$Booking.beginning')]]
+            </span>
+        <datetime-picker id="eventStartPicker"
+                         value="{{_eventStart}}">
+        </datetime-picker>
+      </div>
+
+      <div class="booking-time">
+            <span>
+              [[msg('booking$Booking.ending')]]
+            </span>
+        <datetime-picker id="eventEndPicker"
+                         value="{{_eventEnd}}">
+        </datetime-picker>
+      </div>
+
+      <paper-input value="{{_booking.owner.name}}"
+                   label="[[msg('booking$Booking.owner')]]"
+                   readonly$="[[!_editAllowed]]"
+                   hidden$="[[_editAllowed]]">
+      </paper-input>
+
+      <div class="card-actions">
+        <paper-button on-tap="_delete"
+                      hidden$="[[!_editAllowed]]">
+          [[msg('Delete')]]
+        </paper-button>
+        <paper-button on-tap="_cancel">
+          [[msg('Cancel')]]
+        </paper-button>
+        <paper-button on-tap="_save"
+                      hidden$="[[!_editAllowed]]">
+          [[msg('Save')]]
+        </paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-toast id="wrongBookingRange"
+                 horizontal-align="right">
+      Booking should have correct range
+    </paper-toast>
+  </template>
+  <script>
+    {
+      class BookingCalendarView extends Polymer.mixinBehaviors([CubaLocalizeBehavior], Polymer.Element) {
+        static get is() {
+          return 'booking-calendar-view';
+        }
+
+        static get properties() {
+          return {
+            _resourceId: {
+              type: String,
+              computed: '_getResourceId(route)',
+              observer: '_resourceIdChanged'
+            },
+
+            _resource: {
+              type: Object,
+              observer: '_resourceChanged',
+              value: function () {
+                return null;
+              }
+            },
+
+            // Calendar data source
+            _resourceBookings: {
+              type: Array,
+              value: function () {
+                return [];
+              }
+            },
+
+            // Map eventId -> booking entity
+            _eventsToBookings: {
+              type: Map,
+              value: function () {
+                return new Map();
+              }
+            },
+
+            _event: {
+              type: Object
+            },
+
+            _booking: {
+              type: Object,
+              computed: '_getBooking(_event)'
+            },
+
+            _loggedUser: {
+              type: Object,
+              value: function () {
+                return null;
+              }
+            },
+
+            // the following two properties are used to avoid affecting event ranges
+            // when datetime picker popup is canceled
+            _eventStart: {
+              type: Date,
+              computed: '_getEventStart(_event)'
+            },
+            _eventEnd: {
+              type: Date,
+              computed: '_getEventEnd(_event)'
+            },
+
+            _editAllowed: {
+              type: Boolean,
+              computed: '_getEditAllowed(_event)'
+            },
+
+            _dialogCaption: {
+              type: String,
+              computed: '_getDialogCaption(_event)'
+            }
+          }
+        }
+
+        ready() {
+          super.ready();
+
+          cuba.getApp().getUserInfo().then(function (userInfo) {
+            this.set('_loggedUser', userInfo);
+          }.bind(this));
+
+          this.$.eventCalendar.addEventListener('event-click', event => this._eventClicked(event));
+          this.$.eventCalendar.addEventListener('event-created', event => this._eventCreated(event));
+          this.$.eventCalendar.addEventListener('event-resized', event => this._eventResized(event));
+
+          this.$.eventCalendar.set('isEventResizable', (calEvent) => this._canResizeEvent(calEvent));
+          this.$.eventCalendar.set('isLegalEvent', (calEvent) => calEvent.start >= new Date());
+
+          this.$.editBookingDialog.addEventListener('iron-overlay-canceled', event => this.set('_event', null));
+        }
+
+        _getResourceId(route) {
+          if (route && route.prefix && route.prefix.includes('booking-calendar-view')) {
+            return route.path.substring(1);
+          }
+          return '';
+        }
+
+        _getBooking(event) {
+          if (event) {
+            let booking = this._eventsToBookings.get(event.id);
+            return booking || this._getBookingByEvent(event);
+          }
+          return null;
+        }
+
+        _getEventStart(event) {
+          return event ? event.start : null;
+        }
+
+        _getEventEnd(event) {
+          return event ? event.end : null;
+        }
+
+        _getEditAllowed(event) {
+          if (!event) {
+            return true;
+          }
+
+          let booking = this._eventsToBookings.get(event.id);
+          if (!booking) {
+            return true;
+          }
+
+          return booking.owner.login === this._loggedUser.login
+            && event.start > new Date();
+        }
+
+        _getDialogCaption(event) {
+          return !event
+            ? ''
+            : !this._eventsToBookings.has(event.id)
+              ? 'New Booking'
+              : this.get('_editAllowed')
+                ? 'Edit Booking'
+                : 'View Booking';
+        }
+
+        _getFetchParams(_resource) {
+          return {'resource': _resource}
+        }
+
+        _resourceIdChanged(newValue, ignored) {
+          if (newValue) {
+            this.$.resourceData.load()
+              .then(function (resource) {
+                this.set('_resource', resource);
+              }.bind(this));
+          }
+        }
+
+        _resourceChanged(newValue, ignored) {
+          if (newValue) {
+            this.$.bookingsData.load()
+              .then(function (bookings) {
+                this._prepareCalendarEvents(bookings);
+              }.bind(this));
+          }
+        }
+
+        _eventClicked(event) {
+          this.set('_event', event.detail.calEvent);
+          this.$.editBookingDialog.open();
+        }
+
+        _eventCreated(event) {
+          this.set('_event', event.detail.calEvent);
+          this.$.editBookingDialog.open();
+        }
+
+        _eventResized(event) {
+          // update booking
+        }
+
+        _canResizeEvent(event) {
+          return false;
+        }
+
+        // CRUD
+
+        _save() {
+          let eventStart = this.$.eventStartPicker.valueAsDate;
+          let eventEnd = this.$.eventEndPicker.valueAsDate;
+
+          if (!eventStart || !eventEnd || eventEnd <= eventStart) {
+            this.$.wrongBookingRange.show();
+            return;
+          }
+
+          this.$.editBookingDialog.close();
+
+          this.set('_booking.name', this._event.title);
+          this.set('_booking.beginning', this._formatDate(eventStart));
+          this.set('_booking.ending', this._formatDate(eventEnd));
+
+          let eventId = this._event.id;
+
+          this._eventsToBookings.set(eventId, this._booking);
+          this.$.eventCalendar.updateEvent(this._getEventByBooking(eventId, this._booking));
+
+          cuba.getApp().commitEntity('booking$Booking', this._booking)
+            .then(function (committed) {
+              this._eventsToBookings.get(eventId).id = committed.id;
+            }.bind(this));
+
+          this.set('_event', null);
+        }
+
+        _delete() {
+          this.$.editBookingDialog.close();
+
+          let eventId = this._event.id;
+
+          this.$.eventCalendar.removeEvent(eventId);
+
+          let booking = this._eventsToBookings.get(eventId);
+          if (booking) {
+            this._eventsToBookings.delete(eventId);
+            cuba.getApp().deleteEntity('booking$Booking', booking.id);
+          }
+
+          this.set('_event', null);
+        }
+
+        _cancel() {
+          this.$.editBookingDialog.close();
+
+          if (!this._eventsToBookings.has(this._event.id)) {
+            this.$.eventCalendar.removeEvent(this._event.id);
+          }
+
+          this.set('_event', null);
+        }
+
+        _prepareCalendarEvents(bookings) {
+          let preparedBookings = [];
+          this._eventsToBookings.clear();
+
+          for (let i = 0; i < bookings.length; i++) {
+            let booking = bookings[i];
+            let id = this._generateId();
+
+            preparedBookings.push(this._getEventByBooking(id, booking));
+            this._eventsToBookings.set(id, booking);
+          }
+
+          this.set('_resourceBookings', preparedBookings);
+        }
+
+        // Utils
+
+        _getBookingByEvent(event) {
+          return !event ?
+            null : {
+              'name': event.title,
+              'beginning': this._formatDate(event.start),
+              'ending': this._formatDate(event.end),
+              'resource': this._resource,
+              'owner': this._loggedUser
+            }
+        }
+
+        _getEventByBooking(eventId, booking) {
+          return !booking ?
+            null : {
+              'id': eventId,
+              'start': new Date(booking.beginning),
+              'end': new Date(booking.ending),
+              'title': booking.name
+            };
+        }
+
+        _formatDate(date) {
+          if (date) {
+            let formatted = new Date(date);
+
+            let timezoneCorrection = new Date().getTimezoneOffset() / -60;
+            formatted.setHours(formatted.getHours() + timezoneCorrection);
+
+            return formatted.toISOString()
+              .replace('T', ' ')
+              .replace('Z', '');
+          }
+          return date;
+        }
+
+        _generateId() {
+          return Math.round(0.5 + Math.random() * 10000);
+        }
+      }
+
+      customElements.define(BookingCalendarView.is, BookingCalendarView);
+    }
+  </script>
+</dom-module>

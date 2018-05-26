@@ -1,0 +1,59 @@
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/cuba-app/cuba-localize-behavior.html">
+<link rel="import" href="../../bower_components/cuba-styles/cuba-styles.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../shared-styles.html">
+
+<dom-module id="booking-home">
+  <template>
+    <style include="cuba-styles"></style>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <paper-card heading="[[msg('welcomeHeading')]]" class="page-widget">
+      <div class="card-content">
+        [[msg('welcomeContent')]]
+      </div>
+    </paper-card>
+    <paper-card heading="[[msg('categories')]]" class="page-widget">
+    </paper-card>
+    <paper-card heading="[[msg('resources')]]" class="page-widget">
+    </paper-card>
+    <paper-card heading="[[msg('bookings')]]" class="page-widget">
+    </paper-card>
+  </template>
+  <script>
+    {
+      /**
+       * @extends {Polymer.Element}
+       * @appliesMixin CubaLocalizeBehavior
+       */
+      class BookingHome extends Polymer.mixinBehaviors([CubaLocalizeBehavior], Polymer.Element) {
+
+        static get is() { return 'booking-home'; }
+
+        static get properties() {
+          return {
+            messages: {
+              value: {
+                en: {
+                  "welcomeHeading": "Welcome to Booking Sample",
+                  "welcomeContent": "Powered by CUBA Platform",
+                  "categories": "Open \"Categories\" screen to manage categories of resources available for booking",
+                  "resources": "Open \"Resources\" screen to manage resources available for booking",
+                  "bookings": "Choose some resource to open calendar view with bookings"
+                }
+              }
+            }
+          }
+        }
+      }
+
+      customElements.define(BookingHome.is, BookingHome);
+    }
+  </script>
+</dom-module>

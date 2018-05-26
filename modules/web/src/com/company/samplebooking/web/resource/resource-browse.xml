@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<window xmlns="http://schemas.haulmont.com/cuba/window.xsd"
+        caption="msg://browseCaption"
+        class="com.company.samplebooking.web.resource.ResourceBrowse"
+        focusComponent="resourcesTable"
+        lookupComponent="resourcesTable"
+        messagesPack="com.company.samplebooking.web.resource">
+    <dsContext>
+        <groupDatasource id="resourcesDs"
+                         class="com.company.samplebooking.entity.Resource"
+                         view="resource-view">
+            <query>
+                <![CDATA[select e from booking$Resource e]]>
+            </query>
+        </groupDatasource>
+    </dsContext>
+    <dialogMode height="600"
+                width="800"/>
+    <layout expand="resourcesTable"
+            spacing="true">
+        <filter id="filter"
+                applyTo="resourcesTable"
+                datasource="resourcesDs">
+            <properties include=".*"/>
+        </filter>
+        <groupTable id="resourcesTable"
+                    width="100%">
+            <actions>
+                <action id="create"
+                        openType="DIALOG"/>
+                <action id="edit"
+                        openType="DIALOG"/>
+                <action id="remove"/>
+            </actions>
+            <columns>
+                <column id="name"/>
+                <column id="category"/>
+            </columns>
+            <rows datasource="resourcesDs"/>
+            <rowsCount/>
+            <buttonsPanel id="buttonsPanel"
+                          alwaysVisible="true">
+                <button id="createBtn"
+                        action="resourcesTable.create"/>
+                <button id="editBtn"
+                        action="resourcesTable.edit"/>
+                <button id="removeBtn"
+                        action="resourcesTable.remove"/>
+            </buttonsPanel>
+        </groupTable>
+    </layout>
+</window>

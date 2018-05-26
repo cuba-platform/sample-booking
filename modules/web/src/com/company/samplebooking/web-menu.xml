@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<menu-config xmlns="http://schemas.haulmont.com/cuba/menu.xsd">
+    <menu id="application-booking"
+          insertBefore="administration">
+        <item screen="booking$Category.browse"/>
+        <item screen="booking$Resource.browse"/>
+        <item screen="booking$Booking.browse"/>
+    </menu>
+</menu-config>

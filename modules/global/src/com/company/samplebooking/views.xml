@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<views xmlns="http://schemas.haulmont.com/cuba/view.xsd">
+    <view class="com.company.samplebooking.entity.Resource"
+          extends="_local"
+          name="resource-view">
+        <property name="category"
+                  view="_minimal"/>
+    </view>
+    <view class="com.company.samplebooking.entity.Booking"
+          extends="_local"
+          name="booking-view">
+        <property name="resource"
+                  view="resource-view"/>
+        <property name="owner"
+                  view="_minimal"/>
+    </view>
+</views>
