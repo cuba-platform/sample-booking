@@ -1,0 +1,167 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/cuba-data/cuba-entities.html">
+<link rel="import" href="../../bower_components/cuba-styles/cuba-styles.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../shared-styles.html">
+
+<dom-module id="booking-accordion">
+  <template>
+    <style include="cuba-styles"></style>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+        cursor: pointer;
+      }
+
+      .booking-category-resources {
+        padding: 0 18px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+      }
+
+      .booking-category-item {
+        display: flex;
+      }
+
+      .booking-category-item paper-item-body {
+        flex: 1 1 100%;
+      }
+    </style>
+
+    <cuba-entities id="resourcesData" entity-name="booking$Resource" view="resource-view" auto="true" loading="true" limit="10">
+    </cuba-entities>
+    <paper-listbox>
+      <template id="categoriesList" is="dom-repeat" items="[[_items]]" as="category">
+        <paper-item class="booking-category-item" on-tap="_toggleTab">
+          <paper-item-body>
+            [[category.name]]
+          </paper-item-body>
+          <iron-icon icon="arrow-drop-down" item-icon></iron-icon>
+        </paper-item>
+        <div class="booking-category-resources">
+          <paper-listbox>
+            <template id="resourcesList" is="dom-repeat" items="[[category.resources]]" as="resource">
+              <paper-item on-tap="_handleItemTap">
+                [[resource.name]]
+              </paper-item>
+            </template>
+          </paper-listbox>
+        </div>
+      </template>
+    </paper-listbox>
+  </template>
+  <script>
+    {
+      class BookingAccordion extends Polymer.Element {
+        static get is() {
+          return 'booking-accordion';
+        }
+
+        static get properties() {
+          return {
+            _items: {
+              type: Array,
+              value: function () {
+                return [];
+              }
+            }
+          }
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+          this._loadItems();
+        }
+
+        refresh() {
+          this._loadItems();
+        }
+
+        _handleItemTap(event) {
+          this.dispatchEvent(new CustomEvent('resource-select', {
+            bubbles: true,
+            composed: true,
+            detail: event.model.resource.id
+          }));
+        }
+
+        _toggleTab(event) {
+          const target = event.target;
+          let clickedTab = target;
+
+          if (!clickedTab.classList.contains('booking-category-item')) {
+            clickedTab = target.parentElement;
+          }
+
+          this._closeAllTabs(clickedTab);
+
+          const resourcesPanel = clickedTab.nextElementSibling;
+          const tabIcon = clickedTab.querySelector('iron-icon');
+
+          if (resourcesPanel.style.maxHeight) {
+            resourcesPanel.style.maxHeight = null;
+            tabIcon.setAttribute('icon', 'arrow-drop-down');
+          } else {
+            resourcesPanel.style.maxHeight = resourcesPanel.scrollHeight + 'px';
+            tabIcon.setAttribute('icon', 'arrow-drop-up');
+          }
+        }
+
+        _closeAllTabs(clickedTab) {
+          const tabs = this.shadowRoot.querySelectorAll('.booking-category-item');
+          for (let i = 0; i < tabs.length; i++) {
+            let tab = tabs[i];
+            if (tab === clickedTab) {
+              continue;
+            }
+            tab.nextElementSibling.style.maxHeight = null;
+            tab.querySelector('iron-icon').setAttribute('icon', 'arrow-drop-down');
+          }
+        }
+
+        _loadItems() {
+          this.$.resourcesData.load().then(function (resources) {
+            const resourcesMap = new Map();
+
+            for (let i = 0; i < resources.length; i++) {
+              const resource = resources[i];
+              const category = resource.category.name;
+
+              if (!resourcesMap.has(category)) {
+                const entry = { name: category, resources: [] };
+                resourcesMap.set(category, entry);
+              }
+
+              const entry = resourcesMap.get(category);
+              entry.resources.push(resource);
+            }
+
+            const resourcesByCategories = Array.from(resourcesMap.values())
+              .sort(function (c1, c2) {
+                return c1.name.localeCompare(c2.name);
+              });
+
+            resourcesByCategories.forEach(category => {
+              category.resources = category.resources.sort(function (r1, r2) {
+                return r1.name.localeCompare(r2.name);
+              });
+            });
+
+            this._items = resourcesByCategories;
+            this._closeAllTabs(null);
+          }.bind(this));
+        }
+      }
+
+      customElements.define(BookingAccordion.is, BookingAccordion);
+    }
+  </script>
+</dom-module>

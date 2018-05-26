@@ -6,6 +6,7 @@
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/cuba-app/cuba-localize-behavior.html">
 <link rel="import" href="../bower_components/cuba-styles/cuba-styles.html">
+<link rel="import" href="booking-accordion/booking-accordion.html">
 <link rel="import" href="shared-styles.html">
 <dom-module id="booking-menu">
   <template>
@@ -22,24 +23,8 @@
           flex-shrink: 0;
         }
       }
-
-      .booking-category-resources {
-        padding: 0 18px;
-        background-color: white;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.2s ease-out;
-      }
-      #booking-resources-accordion .booking-category-item {
-        display: flex;
-      }
-      #booking-resources-accordion .booking-category-item paper-item-body {
-        flex: 1 1 100%;
-      }
     </style>
 
-    <cuba-entities id="resourcesData" entity-name="booking$Resource" view="resource-view"
-                   auto="true" loading="true" limit="10"></cuba-entities>
     <app-location path="{{path}}" route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:page" data="{{routeData}}">
     </app-route>
@@ -59,26 +44,7 @@
         </paper-listbox>
       </div>
 
-      <div id="booking-resources-accordion">
-        <paper-listbox>
-          <template id="categoriesList" is="dom-repeat" items="[[_resourcesByCategories]]" as="category">
-            <paper-item class="booking-category-item" on-tap="_toggleAccordionTab">
-              <paper-item-body>[[category.name]]</paper-item-body>
-              <iron-icon icon="arrow-drop-down" item-icon></iron-icon>
-            </paper-item>
-
-            <div class="booking-category-resources">
-              <paper-listbox>
-                <template id="resourcesList" is="dom-repeat" items="[[category.resources]]" as="resource">
-                  <paper-item on-tap="_openResourceBooking">
-                    [[resource.name]]
-                  </paper-item>
-                </template>
-              </paper-listbox>
-            </div>
-          </template>
-        </paper-listbox>
-      </div>
+      <booking-accordion id="accordion" on-resource-select="_handleResourceSelect"></booking-accordion>
     </paper-listbox>
   </template>
   <script>
@@ -99,13 +65,6 @@
             hideCrudScreens: {
               type: Boolean,
               value: true
-            },
-
-            _resourcesByCategories: {
-              type: Array,
-              value: function () {
-                return [];
-              }
             }
           }
         }
@@ -116,8 +75,6 @@
           this.app.getUserInfo().then(function (userInfo) {
             this.hideCrudScreens = 'admin' !== userInfo.login;
           }.bind(this));
-
-          this._loadMenuItems();
         }
 
         navigate(event) {
@@ -126,90 +83,18 @@
         }
 
         refresh() {
-          this._loadMenuItems();
-        }
-
-        _loadMenuItems() {
-          this.$.resourcesData.load().then(function (resources) {
-            const resourcesMap = new Map();
-
-            for (let i = 0; i < resources.length; i++) {
-              const resource = resources[i];
-              const category = resource.category.name;
-
-              if (!resourcesMap.has(category)) {
-                const entry = {name: category, resources: []};
-                resourcesMap.set(category, entry);
-              }
-
-              const entry = resourcesMap.get(category);
-              entry.resources.push(resource);
-            }
-
-            const resourcesByCategories = Array.from(resourcesMap.values())
-              .sort(function (c1, c2) {
-                return c1.name.localeCompare(c2.name);
-              });
-
-            resourcesByCategories.forEach(category => {
-              category.resources = category.resources.sort(function (r1, r2) {
-                return r1.name.localeCompare(r2.name);
-              });
-            });
-
-            this.set('_resourcesByCategories', resourcesByCategories);
-            this._closeAllAccordionTabs(null);
-          }.bind(this));
+          this.$.accordion.refresh();
         }
 
         _computeSelectedItem(page) {
           return page || '';
         }
 
-        _toggleAccordionTab(event) {
-          const target = event.target;
-          let clickedTab = target;
-
-          // if tab text or icon was clicked
-          if (!clickedTab.classList.contains('booking-category-item')) {
-            clickedTab = target.parentElement;
-          }
-
-          this._closeAllAccordionTabs(clickedTab);
-
-          const resourcesPanel = clickedTab.nextElementSibling;
-          const tabIcon = clickedTab.querySelector('iron-icon');
-
-          if (resourcesPanel.style.maxHeight) {
-            tabIcon.setAttribute('icon', 'arrow-drop-down');
-            resourcesPanel.style.maxHeight = null;
-          } else {
-            tabIcon.setAttribute('icon', 'arrow-drop-up');
-            resourcesPanel.style.maxHeight = resourcesPanel.scrollHeight + 'px';
-          }
-        }
-
-        _closeAllAccordionTabs(clickedTab) {
-          const allTabs = this.shadowRoot.querySelectorAll('.booking-category-item');
-          for (let i = 0; i < allTabs.length; i++) {
-            let currentTab = allTabs[i];
-
-            if (currentTab === clickedTab) {
-              continue;
-            }
-
-            const tabIcon = currentTab.querySelector('iron-icon');
-            tabIcon.setAttribute('icon', 'arrow-drop-down');
-
-            currentTab.nextElementSibling.style.maxHeight = null;
-          }
-        }
-
-        _openResourceBooking(event) {
+        _handleResourceSelect(event) {
           this.dispatchEvent(new CustomEvent('navigate', {
             bubbles: true,
             composed: true,
-            detail: this.route.prefix + '/booking-calendar-view/' + event.model.resource.id
+            detail: this.route.prefix + '/booking-calendar-view/' + event.detail
           }));
         }
       }
