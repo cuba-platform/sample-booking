@@ -118,7 +118,7 @@
         }
 
         _handleItemTap(event) {
-          this.set('_selectedCategory', event.model.item);
+          this._selectedCategory = event.model.item;
 
           let editor = this._findEditor(event.target);
           if (!editor.style.maxHeight) {
@@ -130,8 +130,7 @@
           this._findEditor(event.target).style.maxHeight = null;
           event.stopPropagation();
 
-          let categoryId = this.get('_selectedCategory').id;
-          cuba.getApp().deleteEntity('booking$Category', categoryId)
+          this.app.deleteEntity('booking$Category', this._selectedCategory.id)
             .then(function () {
               this.$.data.load();
             }.bind(this));
@@ -141,12 +140,12 @@
           this._findEditor(event.target).style.maxHeight = null;
           event.stopPropagation();
 
-          if (!this.get('_selectedCategory').id) {
+          if (!this._selectedCategory.id) {
             this.shift('entities');
           }
 
-          this.set('_selectedCategory.name', this.get('_oldName'));
-          this.set('_selectedCategory', null);
+          this.set('_selectedCategory.name', this._oldName);
+          this._selectedCategory = null;
           this.$.selector.selected = null;
         }
 
@@ -154,10 +153,10 @@
           this._findEditor(event.target).style.maxHeight = null;
           event.stopPropagation();
 
-          cuba.getApp().commitEntity('booking$Category', this.get('_selectedCategory'))
+          this.app.commitEntity('booking$Category', this._selectedCategory)
             .then(function () {
               this.$.data.load();
-              this.set('_selectedCategory', null);
+              this._selectedCategory = null;
             }.bind(this));
         }
 
@@ -169,7 +168,7 @@
         _createEntity() {
           let newCategory = {'name': 'New Category'};
           this.unshift('entities', newCategory);
-          this.set('_selectedCategory', newCategory);
+          this._selectedCategory = newCategory;
           this.$.selector.selected = 0;
         }
 

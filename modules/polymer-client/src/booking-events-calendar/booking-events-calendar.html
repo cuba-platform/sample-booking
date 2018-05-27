@@ -274,7 +274,7 @@
         }
 
         _canResizeEvent(calEvent) {
-          let isEventResizableCallback = this.get('isEventResizable');
+          let isEventResizableCallback = this.isEventResizable;
 
           if (isEventResizableCallback) {
             return isEventResizableCallback(calEvent);

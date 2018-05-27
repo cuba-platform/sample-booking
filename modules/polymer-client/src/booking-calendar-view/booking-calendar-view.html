@@ -204,7 +204,7 @@
           super.ready();
 
           this.app.getUserInfo().then(function (userInfo) {
-            this.set('_loggedUser', userInfo);
+            this._loggedUser = userInfo;
           }.bind(this));
 
           this.$.eventCalendar.addEventListener('event-click', event => this._eventClicked(event));
@@ -268,7 +268,7 @@
           if (newValue) {
             this.$.resourceData.load()
               .then(function (resource) {
-                this.set('_resource', resource);
+                this._resource = resource;
               }.bind(this));
           }
         }
