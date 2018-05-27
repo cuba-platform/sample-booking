@@ -9,7 +9,7 @@ import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
-@NamePattern("%s (%s - %s)|name,resource,owner")
+@NamePattern("%s (%s - %s)|title,resource,owner")
 @Table(name = "BOOKING_BOOKING")
 @Entity(name = "booking$Booking")
 public class Booking extends StandardEntity {
@@ -17,20 +17,20 @@ public class Booking extends StandardEntity {
     private static final long serialVersionUID = 7310216996801091640L;
 
     @NotNull
-    @Column(name = "NAME", nullable = false, length = 100)
-    protected String name;
+    @Column(name = "TITLE", nullable = false, length = 100)
+    protected String title;
 
     @Future
     @Temporal(TemporalType.TIMESTAMP)
     @NotNull
-    @Column(name = "BEGINNING", nullable = false)
-    protected Date beginning;
+    @Column(name = "BOOKING_START", nullable = false)
+    protected Date start;
 
     @Future
     @Temporal(TemporalType.TIMESTAMP)
     @NotNull
-    @Column(name = "ENDING", nullable = false)
-    protected Date ending;
+    @Column(name = "BOOKING_END", nullable = false)
+    protected Date end;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -42,28 +42,28 @@ public class Booking extends StandardEntity {
     @JoinColumn(name = "OWNER_ID")
     protected User owner;
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
-    public void setBeginning(Date beginning) {
-        this.beginning = beginning;
+    public void setStart(Date start) {
+        this.start = start;
     }
 
-    public Date getBeginning() {
-        return beginning;
+    public Date getStart() {
+        return start;
     }
 
-    public void setEnding(Date ending) {
-        this.ending = ending;
+    public void setEnd(Date end) {
+        this.end = end;
     }
 
-    public Date getEnding() {
-        return ending;
+    public Date getEnd() {
+        return end;
     }
 
     public void setResource(Resource resource) {

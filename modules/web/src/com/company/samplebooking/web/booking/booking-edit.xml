@@ -18,9 +18,9 @@
                     datasource="bookingDs"
                     width="100%">
             <column width="100%">
-                <field property="name"/>
-                <field property="beginning"/>
-                <field property="ending"/>
+                <field property="title"/>
+                <field property="start"/>
+                <field property="end"/>
                 <field property="resource"/>
                 <field editable="false"
                        property="owner"/>

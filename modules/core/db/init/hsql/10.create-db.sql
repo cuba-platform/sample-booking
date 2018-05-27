@@ -42,9 +42,9 @@ create table BOOKING_BOOKING (
     DELETE_TS timestamp,
     DELETED_BY varchar(50),
     --
-    NAME varchar(100) not null,
-    BEGINNING timestamp not null,
-    ENDING timestamp not null,
+    TITLE varchar(100) not null,
+    BOOKING_START timestamp not null,
+    BOOKING_END timestamp not null,
     RESOURCE_ID varchar(36) not null,
     OWNER_ID varchar(36) not null,
     --

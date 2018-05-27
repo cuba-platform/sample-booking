@@ -12,19 +12,19 @@ import java.util.Date;
 
 public class BookingEdit extends AbstractEditor<Booking> {
 
-    @Named("fieldGroup.beginning")
-    private DateField beginningField;
-    @Named("fieldGroup.ending")
-    private DateField endingField;
+    @Named("fieldGroup.start")
+    private DateField beginField;
+    @Named("fieldGroup.end")
+    private DateField endField;
 
     @Inject
     private UserSession userSession;
 
     @Override
     public void ready() {
-        endingField.addValidator(value -> {
-            Date beginning = beginningField.getValue();
-            Date ending = endingField.getValue();
+        endField.addValidator(value -> {
+            Date beginning = beginField.getValue();
+            Date ending = endField.getValue();
 
             if (beginning == null || ending == null) {
                 return;
@@ -38,7 +38,7 @@ public class BookingEdit extends AbstractEditor<Booking> {
 
     @Override
     protected void initNewItem(Booking item) {
-        item.setBeginning(new Date());
+        item.setStart(new Date());
         item.setOwner(userSession.getCurrentOrSubstitutedUser());
     }
 }

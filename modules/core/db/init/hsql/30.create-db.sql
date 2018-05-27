@@ -7,7 +7,7 @@ values ('87d107a6-c84d-28f8-9d2c-1081436ce099', 1, '2018-04-05 13:04:37', 'admin
 insert into SEC_PERMISSION
 (ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
 values ('aed081cc-03a0-4cb3-cdaf-24e316af269d', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 20, 'booking$Category:delete', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
-о за забвение может быть инициировано исключительно самим пользователям. А тут за пользователя решают
+
 insert into SEC_PERMISSION
 (ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, PERMISSION_TYPE, TARGET, VALUE, ROLE_ID)
 values ('7766fac5-da62-af42-f018-abe94e8c833d', 1, '2018-04-05 13:04:37', 'admin', '2018-04-05 13:04:37', null, null, null, 10, 'logWindow', 0, '87d107a6-c84d-28f8-9d2c-1081436ce099');
