@@ -1,0 +1,85 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/cuba-app/cuba-localize-behavior.html">
+<link rel="import" href="../../bower_components/cuba-data/cuba-entities.html">
+<link rel="import" href="../../bower_components/cuba-styles/cuba-styles.html">
+<link rel="import" href="../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../shared-styles.html">
+<link rel="import" href="booking-category-inline-editor.html">
+
+<dom-module id="booking-category-list">
+  <template>
+    <style include="cuba-styles"></style>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <app-toolbar id="toolbar" class="list-toolbar">
+      <span main-title>
+        <paper-spinner active="[[dataLoading]]"></paper-spinner>
+      </span>
+      <paper-icon-button icon="refresh" on-tap="_reload"></paper-icon-button>
+      <paper-icon-button icon="add" on-tap="_createEntity"></paper-icon-button>
+    </app-toolbar>
+
+    <cuba-entities id="data" entity-name="booking$Category" data="{{entities}}"
+                   view="_minimal" loading="{{dataLoading}}" limit="10" provide-count="true"
+                   count="{{entitiesCount}}" auto="[[active]]">
+    </cuba-entities>
+
+    <iron-selector id="selector" on-iron-select="_handleItemSelect"
+                   on-iron-deselect="_handleItemDeselect">
+      <template id="entitiesList" is="dom-repeat" items="{{entities}}">
+        <booking-category-inline-editor category="{{item}}"
+                                        on-category-cancel="_handleCancel"
+                                        on-categories-changed="_reload">
+        </booking-category-inline-editor>
+      </template>
+    </iron-selector>
+  </template>
+  <script>
+    {
+      class BookingCategoryListEditor extends Polymer.mixinBehaviors([CubaLocalizeBehavior], Polymer.Element) {
+        static get is() {
+          return 'booking-category-list';
+        }
+
+        _handleItemSelect(event) {
+          let editor = event.detail.item;
+          editor.open();
+        }
+
+        _handleItemDeselect(event) {
+          let editor = event.detail.item;
+          editor.close();
+        }
+
+        _handleCancel(event) {
+          if (event.detail.deleteCreated) {
+            this.shift('entities');
+          }
+          this.$.selector.selected = null;
+        }
+
+        _reload() {
+          this.$.selector.selected = null;
+          this.$.data.load();
+        }
+
+        _createEntity() {
+          let newCategory = {'name': 'New Category'};
+          this.unshift('entities', newCategory);
+          this._selectedCategory = newCategory;
+          this.$.selector.selected = 0;
+        }
+      }
+
+      customElements.define(BookingCategoryListEditor.is, BookingCategoryListEditor);
+    }
+  </script>
+</dom-module>

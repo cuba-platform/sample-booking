@@ -1,0 +1,145 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/cuba-styles/cuba-styles.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../shared-styles.html">
+
+<dom-module id="booking-category-inline-editor">
+  <template>
+    <style include="cuba-styles"></style>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      paper-card {
+        cursor: pointer;
+      }
+
+      paper-card .card-content {
+        padding: 0 16px;
+      }
+
+      .inline-editor {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+      }
+    </style>
+    <paper-card heading="[[_oldName]]"
+                on-tap="_handleItemTap"
+                class="page-widget item-caption">
+      <div class="inline-editor">
+        <div class="card-content">
+          <paper-input value="{{category.name}}"
+                       error-message="[[serverErrors.name]]"
+                       invalid="[[_isInvalid(serverErrors.name)]]"
+                       label="[[msg('booking$Category.name')]]"
+                       maxlength="50"
+                       required>
+          </paper-input>
+        </div>
+        <div class="card-actions">
+          <paper-button on-tap="_delete"
+                        hidden$="[[!item.id]]">
+            [[msg('Delete')]]
+          </paper-button>
+          <paper-button on-tap="_cancel">
+            [[msg('Cancel')]]
+          </paper-button>
+          <paper-button on-tap="_save">
+            [[msg('Save')]]
+          </paper-button>
+        </div>
+      </div>
+    </paper-card>
+  </template>
+  <script>
+    {
+      class BookingCategoryInlineEditor extends Polymer.mixinBehaviors([CubaLocalizeBehavior, Polymer.IronSelectableBehavior], Polymer.Element) {
+        static get is() {
+          return 'booking-category-inline-editor';
+        }
+
+        static get properties() {
+          return {
+            category: {
+              type: Object,
+              reflectToAttribute: true
+            },
+
+            _oldName: {
+              type: String,
+              computed: '_computeOldName(category)'
+            }
+          }
+        }
+
+        open() {
+          let editor = this.shadowRoot.querySelector('.inline-editor');
+          editor.style.maxHeight = editor.scrollHeight + 'px';
+        }
+
+        close() {
+          let editor = this.shadowRoot.querySelector('.inline-editor');
+          editor.style.maxHeight = null;
+        }
+
+        _handleItemTap(event) {
+          let editor = this.shadowRoot.querySelector('.inline-editor');
+          if (!editor.style.maxHeight) {
+            this.open();
+            return;
+          }
+        }
+
+        _delete(event) {
+          this.close();
+          event.stopPropagation();
+
+          this.app.deleteEntity('booking$Category', this.category.id).then(function () {
+            this.dispatchEvent(new CustomEvent('categories-changed', {
+              bubbles: true,
+              composed: true
+            }));
+          }.bind(this));
+        }
+
+        _cancel(event) {
+          this.close();
+          event.stopPropagation();
+
+          this.set('category.name', this._oldName);
+
+          this.dispatchEvent(new CustomEvent('category-cancel', {
+            bubbles: true,
+            composed: true,
+            detail: {
+              deleteCreated: !this.category.id
+            }
+          }));
+        }
+
+        _save(event) {
+          this.close();
+          event.stopPropagation();
+
+          this.app.commitEntity('booking$Category', this.category).then(function () {
+            this.dispatchEvent(new CustomEvent('categories-changed', {
+              bubbles: true,
+              composed: true
+            }));
+          }.bind(this));
+        }
+
+        _computeOldName(category) {
+          return category ? category.name : '';
+        }
+      }
+
+      customElements.define(BookingCategoryInlineEditor.is, BookingCategoryInlineEditor);
+    }
+  </script>
+</dom-module>

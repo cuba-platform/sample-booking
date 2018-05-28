@@ -22,7 +22,7 @@
 <link rel="import" href="booking-user-menu.html"> 
 <link rel="import" href="booking-login.html"> 
 <link rel="import" href="home/booking-home.html">
-<link rel="import" href="booking-category/booking-category-list-editor.html">
+<link rel="import" href="booking-category/booking-category-list.html">
 <link rel="import" href="booking-resource/booking-resource-management.html">
 <link rel="import" href="booking-calendar-view/booking-calendar-view.html">
 <dom-module id="booking-shell"> 
@@ -87,7 +87,7 @@
           </app-header> 
           <iron-lazy-pages selected="[[_computeSelectedPage(routeData.page)]]" attr-for-selected="data-route" selected-attribute="active" class="content fit"> 
             <booking-home data-route=""></booking-home> 
-            <booking-category-list-editor route="[[routeTail]]" data-route="booking-category-list-editor"></booking-category-list-editor> 
+            <booking-category-list route="[[routeTail]]" data-route="booking-category-list"></booking-category-list>
             <booking-resource-management route="[[routeTail]]" data-route="booking-resource-management" on-resources-changed="_refreshMenu"></booking-resource-management>
             <booking-calendar-view route="[[routeTail]]" data-route="booking-calendar-view"></booking-calendar-view> 
           </iron-lazy-pages> 
