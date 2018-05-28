@@ -1,0 +1,253 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/datetime-picker/datetime-picker.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../shared-styles.html">
+<dom-module id="booking-edit-dialog">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+      }
+
+      paper-input {
+        width: 21em;
+      }
+
+      .booking-time {
+        display: flex;
+        align-items: center;
+      }
+
+      .booking-time.margin-bottom {
+        margin-bottom: 0.5em;
+      }
+
+      .booking-time span {
+        width: 100%;
+      }
+
+      .booking-time datetime-picker {
+        flex: 1;
+      }
+
+      datetime-picker {
+        --input-picker-color: var(--primary-text-color);
+        --input-picker-background: var(--primary-background-color);
+      }
+
+      .card-actions {
+        text-align: right;
+      }
+    </style>
+    <paper-dialog id="dialog">
+      <h2>[[_getDialogCaption(_booking)]]</h2>
+
+      <paper-input value="{{_booking.title}}"
+                   label="[[msg('booking$Booking.title')]]"
+                   readonly$="[[!_isEditAllowed(_booking)]]"
+                   required>
+      </paper-input>
+
+      <div class="booking-time margin-bottom">
+        <span>[[msg('booking$Booking.start')]]</span>
+        <datetime-picker id="bookingStartPicker" value="{{_eventStart}}"></datetime-picker>
+      </div>
+
+      <div class="booking-time">
+        <span>[[msg('booking$Booking.end')]]</span>
+        <datetime-picker id="bookingEndPicker" value="{{_eventEnd}}"></datetime-picker>
+      </div>
+
+      <paper-input value="[[_booking.owner.name]]"
+                   label="[[msg('booking$Booking.owner')]]"
+                   readonly$="[[!_isEditAllowed(_booking)]]"
+                   hidden$="[[_isEditAllowed(_booking)]]">
+      </paper-input>
+
+      <div class="card-actions">
+        <paper-button on-tap="_delete"
+                      hidden$="[[!_isDeleteAllowed(_booking)]]">
+          [[msg('Delete')]]
+        </paper-button>
+        <paper-button on-tap="_cancel">
+          [[msg('Cancel')]]
+        </paper-button>
+        <paper-button on-tap="_save"
+                      hidden$="[[!_isEditAllowed(_booking)]]">
+          [[msg('Save')]]
+        </paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-toast id="wrongBookingRange"
+                 horizontal-align="right">
+      Booking should have correct range
+    </paper-toast>
+  </template>
+  <script>
+    {
+      class BookingEditDialog extends Polymer.mixinBehaviors([CubaLocalizeBehavior], Polymer.Element) {
+        static get is() {
+          return 'booking-edit-dialog';
+        }
+
+        static get properties() {
+          return {
+            _booking: {
+              type: Object,
+              value: function () {
+                return null;
+              }
+            },
+            bookingIdProvider: {
+              type: Object
+            },
+            // the following two properties are used to avoid affecting event ranges
+            // when datetime picker popup is canceled
+            _eventStart: {
+              type: Date,
+              computed: '_getEventStart(_booking)'
+            },
+            _eventEnd: {
+              type: Date,
+              computed: '_getEventEnd(_booking)'
+            },
+            _loggedUser: {
+              type: Object,
+              value: function () {
+                return null;
+              }
+            }
+          }
+        }
+
+        ready() {
+          super.ready();
+
+          this.app.getUserInfo().then(function (userInfo) {
+            this._loggedUser = userInfo;
+          }.bind(this));
+
+          this.$.dialog.addEventListener('iron-overlay-canceled', () => {
+            this._booking = null
+          });
+        }
+
+        edit(booking) {
+          this._booking = booking;
+          this.$.dialog.open();
+        }
+
+        _delete() {
+          this.$.dialog.close();
+
+          let fakeId = this._booking.id;
+
+          this.app.deleteEntity('booking$Booking', this._getRealId(fakeId)).then(function () {
+            this.dispatchEvent(new CustomEvent('booking-delete', {
+              bubbles: true,
+              composed: true,
+              detail: fakeId
+            }));
+          }.bind(this));
+
+          this._booking = null;
+        }
+
+        _cancel() {
+          this.$.dialog.close();
+          this.dispatchEvent(new CustomEvent('booking-cancel', {
+            bubbles: true,
+            composed: true,
+            detail: this._booking
+          }));
+        }
+
+        _save() {
+          let bookingStart = this.$.bookingStartPicker.valueAsDate;
+          let bookingEnd = this.$.bookingEndPicker.valueAsDate;
+
+          if (!bookingStart || !bookingEnd || bookingEnd <= bookingStart) {
+            this.$.wrongBookingRange.show();
+            return;
+          }
+          this.$.dialog.close();
+
+          this._booking.start = bookingStart;
+          this._booking.end = bookingEnd;
+
+          this.app.commitEntity('booking$Booking', this._getBookingToPersist(this._booking)).then(function (committed) {
+            this.dispatchEvent(new CustomEvent('booking-save', {
+              bubbles: true,
+              composed: true,
+              detail: {
+                realId: committed.id,
+                booking: this._booking
+              }
+            }));
+            this._booking = null;
+          }.bind(this));
+        }
+
+        _getDialogCaption(booking) {
+          return !booking ?
+            '' : !this._getRealId(booking.id) ?
+              'New Booking' : this._isEditAllowed(booking) ?
+                'Edit Booking' : 'View Booking';
+        }
+
+        _isEditAllowed(booking) {
+          return booking && booking.owner && booking.owner.login === this._loggedUser.login
+            && booking.start > new Date();
+        }
+
+        _isDeleteAllowed(booking) {
+          return this._isEditAllowed(booking) && !this._isNewBooking(booking);
+        }
+
+        _isNewBooking(booking) {
+          return booking ? !this._getRealId(booking.id) : true;
+        }
+
+        _getBookingToPersist(booking) {
+          let bookingToPersist = Object.assign({}, booking);
+          bookingToPersist.id = this._getRealId(booking.id);
+          bookingToPersist.start = this._formatDate(bookingToPersist.start);
+          bookingToPersist.end = this._formatDate(bookingToPersist.end);
+          return bookingToPersist;
+        }
+
+        _getRealId(fakeId) {
+          return this.bookingIdProvider(fakeId);
+        }
+
+        _getEventStart(booking) {
+          return booking ? booking.start : null;
+        }
+
+        _getEventEnd(booking) {
+          return booking ? booking.end : null;
+        }
+
+        _formatDate(date) {
+          if (date) {
+            let formatted = new Date(date);
+
+            let timezoneCorrection = new Date().getTimezoneOffset() / -60;
+            formatted.setHours(formatted.getHours() + timezoneCorrection);
+
+            return formatted.toISOString()
+              .replace('T', ' ')
+              .replace('Z', '');
+          }
+          return date;
+        }
+      }
+
+      customElements.define(BookingEditDialog.is, BookingEditDialog);
+    }
+  </script>
+</dom-module>

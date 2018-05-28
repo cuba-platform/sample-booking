@@ -1,12 +1,9 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../shared-styles.html">
-<link rel="import" href="../booking-events-calendar/booking-events-calendar.html">
 <link rel="import" href="../../bower_components/cuba-data/cuba-entity.html">
 <link rel="import" href="../../bower_components/cuba-data/cuba-service.html">
-<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../../bower_components/datetime-picker/datetime-picker.html">
+<link rel="import" href="../booking-events-calendar/booking-events-calendar.html">
+<link rel="import" href="../booking-edit-dialog/booking-edit-dialog.html">
+<link rel="import" href="../shared-styles.html">
 
 <dom-module id="booking-calendar-view">
   <template>
@@ -22,36 +19,6 @@
 
       h3 {
         opacity: 0.7;
-      }
-
-      paper-input {
-        width: 21em;
-      }
-
-      .booking-time {
-        display: flex;
-        align-items: center;
-      }
-
-      .booking-time.margin-bottom {
-        margin-bottom: 0.5em;
-      }
-
-      .booking-time span {
-        width: 100%;
-      }
-
-      .booking-time datetime-picker {
-        flex: 1;
-      }
-
-      datetime-picker {
-        --input-picker-color: var(--primary-text-color);
-        --input-picker-background: var(--primary-background-color);
-      }
-
-      .card-actions {
-        text-align: right;
       }
     </style>
 
@@ -76,58 +43,7 @@
                              events="[[_getBookings(_idsToBookings)]]">
     </booking-events-calendar>
 
-    <paper-dialog id="editBookingDialog">
-      <h2>[[_dialogCaption]]</h2>
-
-      <paper-input value="{{_booking.title}}"
-                   label="[[msg('booking$Booking.title')]]"
-                   readonly$="[[!_editAllowed]]"
-                   required>
-      </paper-input>
-
-      <div class="booking-time margin-bottom">
-        <span>
-          [[msg('booking$Booking.start')]]
-        </span>
-        <datetime-picker id="eventStartPicker"
-                         value="{{_eventStart}}">
-        </datetime-picker>
-      </div>
-
-      <div class="booking-time">
-        <span>
-          [[msg('booking$Booking.end')]]
-        </span>
-        <datetime-picker id="eventEndPicker"
-                         value="{{_eventEnd}}">
-        </datetime-picker>
-      </div>
-
-      <paper-input value="{{_booking.owner.name}}"
-                   label="[[msg('booking$Booking.owner')]]"
-                   readonly$="[[!_editAllowed]]"
-                   hidden$="[[_editAllowed]]">
-      </paper-input>
-
-      <div class="card-actions">
-        <paper-button on-tap="_delete"
-                      hidden$="[[!_deleteAllowed]]">
-          [[msg('Delete')]]
-        </paper-button>
-        <paper-button on-tap="_cancel">
-          [[msg('Cancel')]]
-        </paper-button>
-        <paper-button on-tap="_save"
-                      hidden$="[[!_editAllowed]]">
-          [[msg('Save')]]
-        </paper-button>
-      </div>
-    </paper-dialog>
-
-    <paper-toast id="wrongBookingRange"
-                 horizontal-align="right">
-      Booking should have correct range
-    </paper-toast>
+    <booking-edit-dialog id="editDialog"></booking-edit-dialog>
   </template>
   <script>
     {
@@ -161,42 +77,12 @@
               type: Object
             },
 
-            _booking: {
-              type: Object
-            },
-
             _loggedUser: {
               type: Object,
               value: function () {
                 return null;
               }
             },
-
-            // the following two properties are used to avoid affecting event ranges
-            // when datetime picker popup is canceled
-            _eventStart: {
-              type: Date,
-              computed: '_getEventStart(_booking)'
-            },
-            _eventEnd: {
-              type: Date,
-              computed: '_getEventEnd(_booking)'
-            },
-
-            _editAllowed: {
-              type: Boolean,
-              computed: '_getEditAllowed(_booking)'
-            },
-
-            _deleteAllowed: {
-              type: Boolean,
-              computed: '_getDeleteAllowed(_booking)'
-            },
-
-            _dialogCaption: {
-              type: String,
-              computed: '_getDialogCaption(_booking)'
-            }
           }
         }
 
@@ -207,16 +93,25 @@
             this._loggedUser = userInfo;
           }.bind(this));
 
-          this.$.eventCalendar.addEventListener('event-click', event => this._eventClicked(event));
-          this.$.eventCalendar.addEventListener('event-created', event => this._eventCreated(event));
+          this._setupCalendar();
+          this._setupEditDialog();
+        }
+
+        _setupCalendar() {
+          this.$.eventCalendar.addEventListener('event-click', event => this.$.editDialog.edit(this._initBooking(event.detail.calEvent)));
+          this.$.eventCalendar.addEventListener('event-created', event => this.$.editDialog.edit(this._initBooking(event.detail.calEvent)));
           this.$.eventCalendar.addEventListener('event-resized', event => this._eventResized(event));
 
-          this.$.eventCalendar.set('isEventResizable', (calEvent) => this._canResizeEvent(calEvent));
-          this.$.eventCalendar.set('isLegalEvent', (calEvent) => calEvent.start >= new Date());
+          this.$.eventCalendar.isEventResizable = (calEvent) => this._canResizeEvent(calEvent);
+          this.$.eventCalendar.isLegalEvent = (calEvent) => calEvent.start >= new Date();
+        }
 
-          this.$.editBookingDialog.addEventListener('iron-overlay-canceled', () => {
-            this._booking = null;
-          });
+        _setupEditDialog() {
+          this.$.editDialog.addEventListener('booking-delete', event => this._handleBookingDelete(event));
+          this.$.editDialog.addEventListener('booking-cancel', event => this._handleBookingCancel(event));
+          this.$.editDialog.addEventListener('booking-save', event => this._handleBookingSave(event));
+
+          this.$.editDialog.bookingIdProvider = (fakeId) => this._fakeToRealIds.get(fakeId);
         }
 
         _getResourceId(route) {
@@ -224,40 +119,6 @@
             return route.path.substring(1);
           }
           return '';
-        }
-
-        _getEventStart(booking) {
-          return booking ? booking.start : null;
-        }
-
-        _getEventEnd(booking) {
-          return booking ? booking.end : null;
-        }
-
-        _getEditAllowed(booking) {
-          return booking && booking.owner && booking.owner.login === this._loggedUser.login
-            && booking.start > new Date();
-        }
-
-        _getDeleteAllowed(booking) {
-          return this._getEditAllowed(booking) && !this._isNewBooking(booking);
-        }
-
-        _isNewBooking(booking) {
-          if (booking) {
-            return !this._idsToBookings.has(booking.id);
-          }
-          return true;
-        }
-
-        _getDialogCaption(booking) {
-          return !booking
-            ? ''
-            : !this._idsToBookings.has(booking.id)
-              ? 'New Booking'
-              : this._editAllowed
-                ? 'Edit Booking'
-                : 'View Booking';
         }
 
         _getServiceParams(resource) {
@@ -282,16 +143,6 @@
           }
         }
 
-        _eventClicked(event) {
-          this._booking = this._initNewBooking(event.detail.calEvent);
-          this.$.editBookingDialog.open();
-        }
-
-        _eventCreated(event) {
-          this._booking = this._initNewBooking(event.detail.calEvent);
-          this.$.editBookingDialog.open();
-        }
-
         _eventResized(event) {
           // update booking
         }
@@ -302,56 +153,25 @@
 
         // CRUD
 
-        _save() {
-          let eventStart = this.$.eventStartPicker.valueAsDate;
-          let eventEnd = this.$.eventEndPicker.valueAsDate;
-
-          if (!eventStart || !eventEnd || eventEnd <= eventStart) {
-            this.$.wrongBookingRange.show();
-            return;
-          }
-
-          this.$.editBookingDialog.close();
-
-          this._booking.start = eventStart;
-          this._booking.end = eventEnd;
-
-          let fakeId = this._booking.id;
-
-          this._idsToBookings.set(fakeId, this._booking);
-          this.$.eventCalendar.updateEvent(this._booking);
-
-          this.app.commitEntity('booking$Booking', this._getBookingToPersist(this._booking))
-            .then(function (committed) {
-              this._fakeToRealIds.set(fakeId, committed.id);
-            }.bind(this));
-
-          this._booking = null;
+        _handleBookingSave(event) {
+          let booking = event.detail.booking;
+          this._fakeToRealIds.set(booking.id, event.detail.realId);
+          this._idsToBookings.set(booking.id, booking);
+          this.$.eventCalendar.updateEvent(booking);
         }
 
-        _delete() {
-          this.$.editBookingDialog.close();
-
-          let fakeId = this._booking.id;
-          let realId = this._fakeToRealIds.get(fakeId);
-
-          this.$.eventCalendar.removeEvent(fakeId);
+        _handleBookingDelete(event) {
+          let fakeId = event.detail;
           this._fakeToRealIds.delete(fakeId);
           this._idsToBookings.delete(fakeId);
-
-          this.app.deleteEntity('booking$Booking', realId);
-
-          this._booking = null;
+          this.$.eventCalendar.removeEvent(fakeId);
         }
 
-        _cancel() {
-          this.$.editBookingDialog.close();
-
-          if (!this._idsToBookings.has(this._booking.id)) {
-            this.$.eventCalendar.removeEvent(this._booking.id);
+        _handleBookingCancel(event) {
+          let booking = event.detail;
+          if (!this._idsToBookings.has(booking.id)) {
+            this.$.eventCalendar.removeEvent(booking.id);
           }
-
-          this._booking = null;
         }
 
         // Utils
@@ -362,50 +182,24 @@
 
           for (let i = 0; i < bookings.length; i++) {
             let booking = bookings[i];
-            let id = this._generateId();
-            ids.set(id, booking.id);
-            booking.id = id;
 
-            idsToBookings.set(id, booking);
+            let realId = booking.id;
+            let fakeId = Math.round(0.5 + Math.random() * 10000);
+            booking.id = fakeId;
+
+            ids.set(fakeId, realId);
+            idsToBookings.set(fakeId, booking);
           }
 
           this._idsToBookings = idsToBookings;
           this._fakeToRealIds = ids;
         }
 
-        _getBookingToPersist(booking) {
-          let bookingToPersist = Object.assign({}, booking);
-
-          bookingToPersist.id = this._fakeToRealIds.get(booking.id);
-          bookingToPersist.start = this._formatDate(bookingToPersist.start);
-          bookingToPersist.end = this._formatDate(bookingToPersist.end);
-
-          return bookingToPersist;
-        }
-
-        _initNewBooking(booking) {
+        _initBooking(booking) {
           return Object.assign({
             resource: this._resource,
             owner: this._loggedUser
           }, booking);
-        }
-
-        _formatDate(date) {
-          if (date) {
-            let formatted = new Date(date);
-
-            let timezoneCorrection = new Date().getTimezoneOffset() / -60;
-            formatted.setHours(formatted.getHours() + timezoneCorrection);
-
-            return formatted.toISOString()
-              .replace('T', ' ')
-              .replace('Z', '');
-          }
-          return date;
-        }
-
-        _generateId() {
-          return Math.round(0.5 + Math.random() * 10000);
         }
 
         _getBookings(bookingsMap) {
