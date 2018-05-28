@@ -69,20 +69,10 @@
             },
 
             // fake id -> booking entity
-            _idsToBookings: {
-              type: Object
-            },
+            _idsToBookings: Object,
+            _fakeToRealIds: Object,
 
-            _fakeToRealIds: {
-              type: Object
-            },
-
-            _loggedUser: {
-              type: Object,
-              value: function () {
-                return null;
-              }
-            },
+            _userInfo: Object
           }
         }
 
@@ -90,7 +80,8 @@
           super.ready();
 
           this.app.getUserInfo().then(function (userInfo) {
-            this._loggedUser = userInfo;
+            this._userInfo = userInfo;
+            this.$.editDialog.userInfo = userInfo;
           }.bind(this));
 
           this._setupCalendar();
@@ -198,7 +189,7 @@
         _initBooking(booking) {
           return Object.assign({
             resource: this._resource,
-            owner: this._loggedUser
+            owner: this._userInfo
           }, booking);
         }
 

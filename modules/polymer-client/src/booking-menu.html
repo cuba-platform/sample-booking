@@ -33,16 +33,16 @@
         <iron-icon icon="home" slot="item-icon"></iron-icon> [[msg('Home')]]
       </paper-icon-item>
 
-      <div id="booking-crud-screens" hidden$="{{hideCrudScreens}}">
-        <paper-listbox>
-          <paper-icon-item data-path="booking-category-list" on-tap="navigate">
-            <iron-icon icon="apps" slot="item-icon" item-icon></iron-icon> [[msg('Categories')]]
-          </paper-icon-item>
-          <paper-icon-item data-path="booking-resource-management" on-tap="navigate">
-            <iron-icon icon="event-seat" slot="item-icon" item-icon></iron-icon> [[msg('Resources')]]
-          </paper-icon-item>
-        </paper-listbox>
-      </div>
+      <paper-listbox>
+        <paper-icon-item data-path="booking-category-list" on-tap="navigate">
+          <iron-icon icon="apps" slot="item-icon" item-icon></iron-icon>
+          [[msg('Categories')]]
+        </paper-icon-item>
+        <paper-icon-item data-path="booking-resource-management" on-tap="navigate">
+          <iron-icon icon="event-seat" slot="item-icon" item-icon></iron-icon>
+          [[msg('Resources')]]
+        </paper-icon-item>
+      </paper-listbox>
 
       <booking-accordion id="accordion" on-resource-select="_handleResourceSelect"></booking-accordion>
     </paper-listbox>
@@ -60,21 +60,8 @@
 
         static get properties() {
           return {
-            path: String,
-
-            hideCrudScreens: {
-              type: Boolean,
-              value: true
-            }
+            path: String
           }
-        }
-
-        connectedCallback() {
-          super.connectedCallback();
-
-          this.app.getUserInfo().then(function (userInfo) {
-            this.hideCrudScreens = 'admin' !== userInfo.login;
-          }.bind(this));
         }
 
         navigate(event) {

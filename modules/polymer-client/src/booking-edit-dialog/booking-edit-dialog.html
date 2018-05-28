@@ -115,21 +115,12 @@
               type: Date,
               computed: '_getEventEnd(_booking)'
             },
-            _loggedUser: {
-              type: Object,
-              value: function () {
-                return null;
-              }
-            }
+            userInfo: Object
           }
         }
 
         ready() {
           super.ready();
-
-          this.app.getUserInfo().then(function (userInfo) {
-            this._loggedUser = userInfo;
-          }.bind(this));
 
           this.$.dialog.addEventListener('iron-overlay-canceled', () => {
             this._booking = null
@@ -200,7 +191,7 @@
         }
 
         _isEditAllowed(booking) {
-          return booking && booking.owner && booking.owner.login === this._loggedUser.login
+          return booking && booking.owner && booking.owner.login === this.userInfo.login
             && booking.start > new Date();
         }
 
