@@ -214,7 +214,7 @@ configure(polymerClientModule) {
     }
 
     task deploy(type: Copy, dependsOn: [assemble, deployUnbundled]) {
-        from file('build/es6-unbundled')
+        from file('build/es5-bundled')
         into "$cuba.tomcat.dir/webapps/$frontAppDir"
     }
 }

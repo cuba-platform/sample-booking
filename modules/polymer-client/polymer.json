@@ -17,7 +17,7 @@
   },
   "builds": [
     {
-      "preset": "es6-unbundled",
+      "preset": "es5-bundled",
       "basePath": "/app-front/",
       "addServiceWorker": false
     }
