@@ -9,20 +9,13 @@
       :host {
         display: block;
       }
-
       #wrapper {
         height: 500px;
         width: 100%;
       }
-
-      #wrapper > div {
-        border: 1px solid #ccc;
-      }
-
       #wrapper * {
         font-family: Roboto, sans-serif;
       }
-
       .wc-title {
         font-weight: 400;
         height: 1.18em;
@@ -30,42 +23,34 @@
         opacity: 0.7;
         width: 100%;
       }
-
       .ui-widget-header {
         border: none;
 
         display: flex;
         align-items: center;
       }
-
       .ui-widget-header.wc-toolbar {
         background: #fff none;
         border-bottom: none;
       }
-
       .wc-nav {
         flex: 1;
         white-space: nowrap;
       }
-
       .wc-nav.ui-buttonset > * {
         background: none;
       }
-
       .wc-nav.ui-buttonset > .wc-prev {
         border-right: none;
         margin-right: 0;
       }
-
       .wc-nav.ui-buttonset > .wc-today {
         margin: 0;
       }
-
       .wc-nav.ui-buttonset > .wc-next {
         border-left: none;
         margin-left: 0;
       }
-
       .wc-prev.ui-button.ui-widget:hover,
       .wc-prev.ui-button.ui-widget:focus,
       .wc-today.ui-button.ui-widget:hover,
@@ -74,126 +59,119 @@
       .wc-next.ui-button.ui-widget:focus {
         border-color: #d3d3d3;
       }
-
       .wc-prev:hover > span:last-child,
       .wc-next:hover > span:last-child,
       .wc-today:hover > span:last-child {
         background-color: rgba(0, 0, 0, 0.04);
       }
-
       .wc-today > span:first-child {
         display: none;
       }
-
       .wc-today > span:last-child {
         padding: .4em 1em .4em 1em;
       }
-
       .ui-widget-content {
         border: 1px solid #ccc;
         border-left: none;
         border-right: none;
       }
-
+      .wc-header {
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        width: 100%;
+      }
       .ui-widget-content.wc-header td {
         border-left-width: 1px;
         border-right-width: 1px;
         font-size: 0.7em;
       }
-
       .ui-widget-content.wc-header td:first-child {
         border-right: 1px solid #ccc;
       }
-
       .ui-widget-content.wc-header td:last-child {
         border-right: none;
       }
-
+      .wc-scrollable-grid {
+        border: 1px solid #ccc;
+      }
       .wc-scrollable-grid .wc-day-column-first {
         border-width: 0 0 0 1px;
       }
-
       .wc-grid-row-events > td:nth-child(1) {
         border-left: none;
       }
-
       table.wc-time-slots > td {
         border-color: #ccc;
       }
-
       .wc-day-column-header.wc-today {
         border-right: 1px solid #ccc;
       }
-
       .wc-time-column-header:first-child {
         box-sizing: content-box;
         -moz-box-sizing: content-box;
         width: 46px;
       }
-
       .wc-grid-timeslot-header {
         background: none;
         border-left: 1px solid #ccc;
       }
-
       .wc-hour-header {
         background: none;
         border-color: #ccc;
         font-size: 0.7em;
       }
-
       .wc-time-header-cell,
       .wc-time-header-cell .wc-am-pm {
         color: #555555;
         font-size: inherit;
       }
-
       .wc-cal-event {
         display: block;
       }
+      .wc-time-slots .wc-day-column.ui-state-default.previous-day-column {
+        background-color: rgb(238, 238, 238);
+      }
     </style>
 
-    <div id="wrapper">
-    </div>
+    <div id="wrapper"></div>
   </template>
   <script>
     {
       class BookingEventsCalendar extends Polymer.Element {
         static get is() {
-          return 'booking-events-calendar';
+          return 'booking-events-calendar'
         }
 
         static get properties() {
           return {
             events: {
               type: Array,
-              reflectToAttribute: true,
               observer: '_eventsChanged',
               value: function () {
                 return [];
               }
             },
-
-            isEventResizable: {
-              type: Function
-            },
-
-            isLegalEvent: {
-              type: Function
-            }
+            isLegalEvent: Object
           }
         }
 
         connectedCallback() {
           super.connectedCallback();
 
-          let that = this;
-          let wrapper = this.$.wrapper;
+          $(this.$.wrapper).ready(() =>
+            this._renderCalendar($(this.$.wrapper).height()));
+        }
 
-          $(wrapper).ready(function () {
-            let wrapperHeight = $(wrapper).height();
-            that._renderCalendar(wrapperHeight);
-          });
+        updateEvent(calendarEvent) {
+          if (calendarEvent) {
+            $(this.$.wrapper).weekCalendar('updateEvent', calendarEvent);
+          }
+        }
+
+        removeEvent(calendarEventId) {
+          if (calendarEventId) {
+            $(this.$.wrapper).weekCalendar('removeEvent', calendarEventId);
+          }
         }
 
         _eventsChanged() {
@@ -201,48 +179,51 @@
         }
 
         _renderCalendar(wrapperHeight) {
-          let that = this;
-
-          let calendar = $(this.$.wrapper).weekCalendar({
-            // look and feel
+          const that = this;
+          $(this.$.wrapper).weekCalendar({
+            timeslotsPerHour: 2,
             hourLine: true,
-            timeslotsPerHour: 4,
-            height: () => wrapperHeight,
+            use24Hour: true,
+            businessHours: {
+              start: 7,
+              end: 24,
+              limitDisplay: true
+            },
+            height: () => Math.max(document.documentElement.clientHeight, window.innerHeight || 0) - 270,
 
-            // bind calendar and bookings
+            draggable: () => false,
+            resizable: () => false,
+
             data: function (start, end, callback) {
-              callback(that._getEvents());
+              callback(that.events);
             },
 
-            // listeners
-            eventClick: (calEvent, event) => that._eventClick(calEvent),
-            eventNew: (calEvent, calElement, freeBusyManager, calendar, DomEvent) => that._eventCreated(calEvent),
-            eventResize: (newCalEvent, oldCalEvent, element) => that._eventResized(newCalEvent, oldCalEvent),
-
-            // behavior
-            draggable: (calEvent, eventElement) => false,
-            resizable: (calEvent, eventElement) => that._canResizeEvent(calEvent),
-
             beforeEventNew: (e, ui) => {
-              if (this.isLegalEvent) {
-                let legal = this.isLegalEvent(ui.calEvent);
-
-                if (!legal) {
-                  e.stopPropagation();
-                }
-
-                return legal;
+              if (!this.isLegalEvent) {
+                return true;
               }
 
-              return true;
-            }
+              const legal = this.isLegalEvent(ui.calEvent);
+              if (!legal) {
+                e.stopPropagation();
+              }
+              return legal;
+            },
+
+            eventNew: (calEvent) => that._handleEventCreated(calEvent),
+            eventClick: (calEvent) => that._handleEventClicked(calEvent)
           });
 
-          this.shadowRoot.querySelector('.wc-scrollbar-shim').style.width = this._findScrollBarWidth() + 'px';
+          this._displayPastDays();
+
+          this.shadowRoot.querySelector('.wc-prev').addEventListener('click', e => this._displayPastDays());
+          this.shadowRoot.querySelector('.wc-today').addEventListener('click', e => this._displayPastDays());
+          this.shadowRoot.querySelector('.wc-next').addEventListener('click', e => this._displayPastDays());
         }
 
-        _eventClick(calEvent) {
-          this.dispatchEvent(new CustomEvent('event-click', {
+        _handleEventCreated(calEvent) {
+          calEvent.id = _getRandomInt();
+          this.dispatchEvent(new CustomEvent('booking-created', {
             bubbles: true,
             composed: true,
             detail: {
@@ -251,9 +232,8 @@
           }));
         }
 
-        _eventCreated(calEvent) {
-          calEvent.id = this._randomInt(1, 10000);
-          this.dispatchEvent(new CustomEvent('event-created', {
+        _handleEventClicked(calEvent) {
+          this.dispatchEvent(new CustomEvent('booking-clicked', {
             bubbles: true,
             composed: true,
             detail: {
@@ -262,59 +242,43 @@
           }));
         }
 
-        _eventResized(newCalEvent, oldCalEvent) {
-          this.dispatchEvent(new CustomEvent('event-resized', {
-            bubbles: true,
-            composed: true,
-            detail: {
-              newCalEvent: newCalEvent,
-              oldCalEvent: oldCalEvent
-            }
-          }));
-        }
+        _displayPastDays() {
+          let firstDay = $(this.$.wrapper).weekCalendar('getCurrentFirstDay');
+          firstDay = _applyTimezoneCorrection(firstDay);
 
-        _canResizeEvent(calEvent) {
-          let isEventResizableCallback = this.isEventResizable;
+          let lastDay = $(this.$.wrapper).weekCalendar('getCurrentLastDay');
+          lastDay = _applyTimezoneCorrection(lastDay);
 
-          if (isEventResizableCallback) {
-            return isEventResizableCallback(calEvent);
+          const now = new Date();
+          const columns = this.shadowRoot.querySelector('.wc-grid-row-events').children;
+
+          const daysToMark = lastDay < now ? columns.length - 1
+            : firstDay < now ? now.getDay()
+              : 0;
+
+          for (let i = 1; i < columns.length; i++) {
+            columns[i].classList.remove('previous-day-column');
           }
-
-          return true;
-        }
-
-        // warning: stolen from jQ week calendar
-        _findScrollBarWidth() {
-          const parent = $('<div style="width:50px;height:50px;overflow:auto"><div/></div>').appendTo('body');
-          const child = parent.children();
-          const width = child.innerWidth() - child.height(99).innerWidth();
-          parent.remove();
-          return width || 16;
-        }
-
-        _getEvents() {
-          return this.events;
-        }
-
-        _randomInt(min, max) {
-          let rand = min - 0.5 + Math.random() * (max - min + 1);
-          return Math.round(rand);
-        }
-
-        updateEvent(calEvent) {
-          if (calEvent) {
-            $(this.$.wrapper).weekCalendar('updateEvent', calEvent);
-          }
-        }
-
-        removeEvent(calEvent) {
-          if (calEvent) {
-            $(this.$.wrapper).weekCalendar('removeEvent', calEvent);
+          for (let i = 1; i <= daysToMark; i++) {
+            columns[i].classList.add('previous-day-column');
           }
         }
       }
 
       customElements.define(BookingEventsCalendar.is, BookingEventsCalendar);
+
+      function _getRandomInt() {
+        return Math.round(0.5 + Math.random() * 100000);
+      }
+
+      function _applyTimezoneCorrection(date) {
+        const corrected = new Date(date);
+
+        const timezoneCorrection = new Date().getTimezoneOffset() / -60;
+        corrected.setHours(corrected.getHours() + timezoneCorrection);
+
+        return corrected;
+      }
     }
   </script>
 </dom-module>

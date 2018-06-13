@@ -13,7 +13,7 @@
                               class="com.company.samplebooking.entity.Category"
                               view="_minimal">
             <query>
-                <![CDATA[select e from booking$Category e]]>
+                <![CDATA[select e from booking$Category e order by e.name]]>
             </query>
         </collectionDatasource>
     </dsContext>

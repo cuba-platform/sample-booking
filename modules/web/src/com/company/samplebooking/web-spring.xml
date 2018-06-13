@@ -12,6 +12,8 @@
             <map>
                 <entry key="booking_BookingsLoadService"
                        value="com.company.samplebooking.service.BookingsLoadService"/>
+                <entry key="booking_SampleConfigLoadService"
+                       value="com.company.samplebooking.service.SampleConfigLoadService"/>
             </map>
         </property>
     </bean>

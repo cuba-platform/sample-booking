@@ -1,9 +1,9 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/cuba-data/cuba-entity.html">
-<link rel="import" href="../../bower_components/cuba-data/cuba-service.html">
 <link rel="import" href="../booking-events-calendar/booking-events-calendar.html">
-<link rel="import" href="../booking-edit-dialog/booking-edit-dialog.html">
 <link rel="import" href="../shared-styles.html">
+<link rel="import" href="booking-calendar-data.html">
+<link rel="import" href="booking-edit-dialog.html">
 
 <dom-module id="booking-calendar-view">
   <template>
@@ -30,20 +30,23 @@
                  data="{{_resource}}">
     </cuba-entity>
 
-    <cuba-service id="bookingsData"
-                  service-name="booking_BookingsLoadService"
-                  method="load"
-                  auto="false"
-                  params="[[_getServiceParams(_resource)]]">
-    </cuba-service>
+    <booking-calendar-data id="calendarData"
+                           resource="[[_resource]]"
+                           demo-mode="[[demoMode]]"
+                           user-info="[[_userInfo]]"
+                           on-data-changed="_calendarDataChanged">
+    </booking-calendar-data>
 
     <h3>[[_resource.name]]</h3>
 
-    <booking-events-calendar id="eventCalendar"
-                             events="[[_getBookings(_idsToBookings)]]">
+    <booking-events-calendar id="eventsCalendar"
+                             events="[[_getBookings(_bookings)]]">
     </booking-events-calendar>
 
-    <booking-edit-dialog id="editDialog"></booking-edit-dialog>
+    <booking-edit-dialog id="editDialog"
+                         demo-mode="[[demoMode]]"
+                         user-info="[[_userInfo]]">
+    </booking-edit-dialog>
   </template>
   <script>
     {
@@ -62,17 +65,17 @@
 
             _resource: {
               type: Object,
-              observer: '_resourceChanged',
               value: function () {
                 return null;
               }
             },
 
-            // fake id -> booking entity
-            _idsToBookings: Object,
-            _fakeToRealIds: Object,
+            // id -> booking wrapper
+            _bookings: Object,
 
-            _userInfo: Object
+            _userInfo: Object,
+
+            demoMode: Boolean
           }
         }
 
@@ -81,7 +84,6 @@
 
           this.app.getUserInfo().then(function (userInfo) {
             this._userInfo = userInfo;
-            this.$.editDialog.userInfo = userInfo;
           }.bind(this));
 
           this._setupCalendar();
@@ -89,20 +91,15 @@
         }
 
         _setupCalendar() {
-          this.$.eventCalendar.addEventListener('event-click', event => this.$.editDialog.edit(this._initBooking(event.detail.calEvent)));
-          this.$.eventCalendar.addEventListener('event-created', event => this.$.editDialog.edit(this._initBooking(event.detail.calEvent)));
-          this.$.eventCalendar.addEventListener('event-resized', event => this._eventResized(event));
-
-          this.$.eventCalendar.isEventResizable = (calEvent) => this._canResizeEvent(calEvent);
-          this.$.eventCalendar.isLegalEvent = (calEvent) => calEvent.start >= new Date();
+          this.$.eventsCalendar.addEventListener('booking-clicked', event => this.$.editDialog.edit(this._initBooking(event.detail.calEvent)));
+          this.$.eventsCalendar.addEventListener('booking-created', event => this.$.editDialog.edit(this._initBooking(event.detail.calEvent)));
+          this.$.eventsCalendar.isLegalEvent = (calEvent) => calEvent.start >= new Date() && !this.$.editDialog.opened;
         }
 
         _setupEditDialog() {
-          this.$.editDialog.addEventListener('booking-delete', event => this._handleBookingDelete(event));
-          this.$.editDialog.addEventListener('booking-cancel', event => this._handleBookingCancel(event));
-          this.$.editDialog.addEventListener('booking-save', event => this._handleBookingSave(event));
-
-          this.$.editDialog.bookingIdProvider = (fakeId) => this._fakeToRealIds.get(fakeId);
+          this.$.editDialog.addEventListener('booking-deleted', event => this._handleBookingDelete(event));
+          this.$.editDialog.addEventListener('booking-edit-cancel', event => this._handleBookingCancel(event));
+          this.$.editDialog.addEventListener('booking-saved', event => this._handleBookingSave(event));
         }
 
         _getResourceId(route) {
@@ -112,85 +109,48 @@
           return '';
         }
 
-        _getServiceParams(resource) {
-          return {'resource': resource}
-        }
-
-        _resourceIdChanged(newValue, ignored) {
-          if (newValue) {
-            this.$.resourceData.load()
-              .then(function (resource) {
-                this._resource = resource;
-              }.bind(this));
+        _resourceIdChanged(resourceId) {
+          if (resourceId) {
+            this.$.resourceData.load().then(function (resource) {
+              this._resource = resource;
+            }.bind(this));
           }
         }
 
-        _resourceChanged(newValue, ignored) {
-          if (newValue) {
-            this.$.bookingsData.load()
-              .then(function (bookings) {
-                this._prepareCalendarEvents(bookings);
-              }.bind(this));
-          }
+        _calendarDataChanged() {
+          this._bookings = this.$.calendarData.data;
         }
-
-        _eventResized(event) {
-          // update booking
-        }
-
-        _canResizeEvent(event) {
-          return false;
-        }
-
-        // CRUD
 
         _handleBookingSave(event) {
-          let booking = event.detail.booking;
-          this._fakeToRealIds.set(booking.id, event.detail.realId);
-          this._idsToBookings.set(booking.id, booking);
-          this.$.eventCalendar.updateEvent(booking);
+          const booking = event.detail;
+
+          this.$.eventsCalendar.updateEvent(booking);
+          this.$.calendarData.save(booking)
+            .then(function (booking) {
+              this._bookings.set(booking.id, booking);
+              this.$.eventsCalendar.events = this._getBookings(this._bookings);
+            }.bind(this));
         }
 
         _handleBookingDelete(event) {
-          let fakeId = event.detail;
-          this._fakeToRealIds.delete(fakeId);
-          this._idsToBookings.delete(fakeId);
-          this.$.eventCalendar.removeEvent(fakeId);
+          const booking = event.detail;
+
+          this._bookings.delete(booking.id);
+          this.$.calendarData.delete(booking);
+          this.$.eventsCalendar.removeEvent(booking.id);
+          this.$.eventsCalendar.events = this._getBookings(this._bookings);
         }
 
         _handleBookingCancel(event) {
-          let booking = event.detail;
-          if (!this._idsToBookings.has(booking.id)) {
-            this.$.eventCalendar.removeEvent(booking.id);
+          const booking = event.detail;
+          if (!this._bookings.has(booking.id)) {
+            this.$.eventsCalendar.removeEvent(booking.id);
           }
-        }
-
-        // Utils
-
-        _prepareCalendarEvents(bookings) {
-          let idsToBookings = new Map();
-          let ids = new Map();
-
-          for (let i = 0; i < bookings.length; i++) {
-            let booking = bookings[i];
-
-            let realId = booking.id;
-            let fakeId = Math.round(0.5 + Math.random() * 10000);
-            booking.id = fakeId;
-
-            ids.set(fakeId, realId);
-            idsToBookings.set(fakeId, booking);
-          }
-
-          this._idsToBookings = idsToBookings;
-          this._fakeToRealIds = ids;
         }
 
         _initBooking(booking) {
-          return Object.assign({
-            resource: this._resource,
-            owner: this._userInfo
-          }, booking);
+          booking.title = 'Booking title';
+          return Object.assign(this.$.calendarData.create(), booking);
         }
 
         _getBookings(bookingsMap) {

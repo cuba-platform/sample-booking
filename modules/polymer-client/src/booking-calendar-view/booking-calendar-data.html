@@ -1,0 +1,277 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html"> 
+<link rel="import" href="../../bower_components/cuba-data/cuba-service.html">
+<dom-module id="booking-calendar-data"> 
+  <template>
+    <cuba-service id="bookingsDataService"
+                  service-name="booking_BookingsLoadService"
+                  method="load"
+                  auto="false"
+                  params="[[_getServiceParams(resource)]]">
+    </cuba-service>
+  </template> 
+  <script>
+    {
+      class BookingCalendarData extends Polymer.mixinBehaviors([CubaAppAwareBehavior], Polymer.Element) {
+        static get is() {
+          return 'booking-calendar-data';
+        }
+
+        static get properties() {
+          return {
+            resource: {
+              type: Object,
+              observer: '_resourceChanged'
+            },
+
+            data: {
+              type: Object,
+              value: function () {
+                return new Map();
+              }
+            },
+
+            demoMode: Boolean,
+
+            userInfo: Object
+          }
+        }
+
+        create() {
+          return {
+            id: Math.floor(1 + Math.random() * 100000),
+            resource: this.resource.name,
+            owner: this.userInfo.name,
+            entity: {
+              resource: this.resource,
+              owner: this.userInfo
+            }
+          };
+        }
+
+        save(booking) {
+          return new Promise((resolve) => {
+            if (!this.demoMode) {
+              this.app.commitEntity('booking$Booking', _getBookingToPersist(booking))
+                .then(function (committed) {
+                  booking.entity = committed;
+                  resolve(booking);
+                }.bind(this));
+            } else {
+              booking.entity.id = _getRandomUuid();
+              resolve(booking);
+            }
+          });
+        }
+
+        delete(booking) {
+          if (!this.demoMode) {
+            this.app.deleteEntity('booking$Booking', booking.entity.id);
+          }
+        }
+
+        _resourceChanged() {
+          if (this.resource) {
+            if (!this.demoMode) {
+              this._loadDataWithService();
+            } else {
+              this._generateDemoData();
+            }
+          }
+        }
+
+        _loadDataWithService() {
+          this.$.bookingsDataService.load().then(function (bookings) {
+            this.data = _processBookings(bookings);
+
+            this.dispatchEvent(new CustomEvent('data-changed', {
+              bubbles: true,
+              composed: true
+            }));
+          }.bind(this));
+        }
+
+        _generateDemoData() {
+          const bookings = _generateBookings(this.resource);
+          this.data = _processBookings(bookings);
+
+          this.dispatchEvent(new CustomEvent('data-changed', {
+            bubbles: true,
+            composed: true
+          }));
+        }
+
+        _getServiceParams(resource) {
+          return { 'resource': resource }
+        }
+      }
+
+      customElements.define(BookingCalendarData.is, BookingCalendarData);
+
+      function _getBookingToPersist(bookingWrapper) {
+        const booking = bookingWrapper.entity;
+
+        booking.title = bookingWrapper.title;
+        booking.start = _formatDate(_applyTimezoneCorrection(bookingWrapper.start));
+        booking.end = _formatDate(_applyTimezoneCorrection(bookingWrapper.end));
+
+        return booking;
+      }
+
+      function _generateBookings(resource) {
+        const bookings = [];
+
+        for (let i = 0; i < 7; i++) {
+          for (let j = 0; j < 2; j++) {
+            const start = _generateBookingStart(j, i);
+            const end = _generateBookingEnd(start, resource.category.name);
+            const booking = _createDemoBooking(start, end, resource);
+
+            if (!_overlapsPreviousBooking(bookings[bookings.length - 1], booking)) {
+              bookings.push(booking);
+            }
+          }
+        }
+
+        return bookings;
+      }
+
+      function _processBookings(bookings) {
+        if (bookings) {
+          const map = new Map();
+          for (let i = 0; i < bookings.length; i++) {
+            const wrapper = _wrapBooking(bookings[i]);
+            map.set(wrapper.id, wrapper);
+          }
+          return map;
+        }
+        return new Map();
+      }
+
+      function _wrapBooking(booking) {
+        return {
+          id: Math.floor(1 + Math.random() * 100000),
+          title: booking.title,
+          start: _formatDate(booking.start),
+          end: _formatDate(booking.end),
+          resource: booking.resource.name,
+          owner: booking.owner.name,
+          entity: booking
+        };
+      }
+
+      function _generateBookingStart(bookingNum, dayNum) {
+        const start = new Date(Date.now());
+        const randStart = Math.floor(Math.random() * 5 - 2);
+
+        start.setHours(10 + 5 * bookingNum + randStart);
+        start.setMinutes(0);
+
+        const shift = 15 * _getRandomCoeff();
+        const hShift = Math.floor(shift / 60);
+        const mShift = shift % 60;
+        const timezoneCorrection = new Date().getTimezoneOffset() / -60;
+
+        start.setHours(start.getHours() + hShift + timezoneCorrection);
+        start.setMinutes(start.getMinutes() + mShift);
+        start.setDate(start.getDate() - start.getDay() + dayNum);
+
+        return start;
+      }
+
+      function _generateBookingEnd(start, category) {
+        const end = new Date(start);
+
+        const shift = 15 * _getRandomCoeff();
+        const hShift = Math.floor(shift / 60);
+        const mShift = shift % 60;
+        const weightCoeff = _getCategoryWeightCoeff(category);
+
+        end.setHours(end.getHours() + weightCoeff + hShift);
+        end.setMinutes(end.getMinutes() + mShift);
+
+        return end;
+      }
+
+      function _getRandomCoeff() {
+        return Math.floor(Math.random() * 5) + 1;
+      }
+
+      function _getCategoryWeightCoeff(category) {
+        switch (category) {
+          case 'Apartments':
+          case 'Meeting rooms':
+            return 1.5;
+          case 'Equipment':
+          case 'Shared accounts':
+            return 1;
+        }
+      }
+
+      function _createDemoBooking(bookingStart, bookingEnd, resource) {
+        return {
+          id: _getRandomUuid(),
+          title: _getRandomBookingTitle(resource.category.name),
+          start: bookingStart,
+          end: bookingEnd,
+          resource: resource,
+          owner: { name: _getRandomOwner() }
+        }
+      }
+
+      function _getRandomUuid() {
+        function s4() {
+          return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+        }
+
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+      }
+
+      function _getRandomBookingTitle(category) {
+        switch (category) {
+          case 'Apartments':
+            return _chooseRandomTitle(['Foreign colleagues', 'Clients', 'Guests']);
+          case 'Equipment':
+            return _chooseRandomTitle(['Product demo', 'Conference', 'Lesson']);
+          case 'Meeting rooms':
+            return _chooseRandomTitle(['Project meeting', 'Conference', 'Meetup']);
+          case 'Shared accounts':
+            return _chooseRandomTitle(['Webinar', 'Online training', 'Call']);
+        }
+      }
+
+      function _chooseRandomTitle(titles) {
+        return titles[Math.floor(Math.random() * titles.length)];
+      }
+
+      function _formatDate(date) {
+        if (date instanceof Date) {
+          return date.toISOString()
+            .replace('T', ' ')
+            .replace('Z', '');
+        }
+        return date;
+      }
+
+      function _applyTimezoneCorrection(date) {
+        const corrected = new Date(date);
+
+        const timezoneCorrection = new Date().getTimezoneOffset() / -60;
+        corrected.setHours(corrected.getHours() + timezoneCorrection);
+
+        return corrected;
+      }
+
+      function _getRandomOwner() {
+        const names = ['Sophia', 'Jackson', 'Olivia', 'Liam', 'Emma', 'Noah', 'Ava', 'Aiden'];
+        return names[Math.floor(Math.random() * 7)];
+      }
+
+      function _overlapsPreviousBooking(previous, current) {
+        return previous && current
+          && new Date(current.start) < new Date(previous.end);
+      }
+    }
+  </script> 
+</dom-module>

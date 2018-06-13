@@ -10,7 +10,7 @@
                               class="com.company.samplebooking.entity.Category"
                               view="_local">
             <query>
-                <![CDATA[select e from booking$Category e]]>
+                <![CDATA[select e from booking$Category e order by e.name]]>
             </query>
         </collectionDatasource>
     </dsContext>
@@ -21,7 +21,8 @@
         <filter id="filter"
                 applyTo="categoriesTable"
                 datasource="categoriesDs">
-            <properties include=".*"/>
+            <properties include=".*"
+                        excludeProperties="createTs,createdBy,deleteTs,deletedBy,updateTs,updatedBy,id"/>
         </filter>
         <table id="categoriesTable"
                width="100%">

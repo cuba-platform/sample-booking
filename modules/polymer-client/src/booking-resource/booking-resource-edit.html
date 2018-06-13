@@ -63,6 +63,31 @@
 
         static get is() { return 'booking-resource-edit'; }
 
+        static get properties() {
+          return { demoMode: Boolean }
+        }
+
+        _delete() {
+          if (!this.demoMode) {
+            super._delete();
+          } else {
+            this.dispatchEvent(new CustomEvent('resource-edit-cancel', {
+              bubbles: true,
+              composed: true
+            }));
+          }
+        }
+
+        _save() {
+          if (!this.demoMode) {
+            super._save();
+          } else {
+            this.dispatchEvent(new CustomEvent('resource-edit-cancel', {
+              bubbles: true,
+              composed: true
+            }));
+          }
+        }
       }
 
       customElements.define(BookingResourceEdit.is, BookingResourceEdit);

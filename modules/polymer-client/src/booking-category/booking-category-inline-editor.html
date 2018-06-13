@@ -3,6 +3,7 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html"> 
 <link rel="import" href="../shared-styles.html">
 
 <dom-module id="booking-category-inline-editor">
@@ -26,6 +27,13 @@
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.2s ease-out;
+      }
+
+      .card-actions {
+        padding-bottom: 0.5em;
+      }
+      paper-toast {
+        white-space: nowrap;
       }
     </style>
     <paper-card heading="[[_oldName]]"
@@ -55,6 +63,15 @@
         </div>
       </div>
     </paper-card>
+    <paper-toast id="demoMessage" horizontal-align="right">
+      [[msg('Editing categories is not allowed in demo mode.')]]
+    </paper-toast>
+    <paper-toast id="categorySaved" horizontal-align="right">
+      [[msg('Category successfully saved')]]
+    </paper-toast>
+    <paper-toast id="categoryDeleted" horizontal-align="right">
+      [[msg('Category successfully deleted')]]
+    </paper-toast>
   </template>
   <script>
     {
@@ -65,10 +82,9 @@
 
         static get properties() {
           return {
-            category: {
-              type: Object,
-              reflectToAttribute: true
-            },
+            category: Object,
+
+            demoMode: Boolean,
 
             _oldName: {
               type: String,
@@ -78,20 +94,19 @@
         }
 
         open() {
-          let editor = this.shadowRoot.querySelector('.inline-editor');
+          const editor = this.shadowRoot.querySelector('.inline-editor');
           editor.style.maxHeight = editor.scrollHeight + 'px';
         }
 
         close() {
-          let editor = this.shadowRoot.querySelector('.inline-editor');
+          const editor = this.shadowRoot.querySelector('.inline-editor');
           editor.style.maxHeight = null;
         }
 
         _handleItemTap(event) {
-          let editor = this.shadowRoot.querySelector('.inline-editor');
+          const editor = this.shadowRoot.querySelector('.inline-editor');
           if (!editor.style.maxHeight) {
             this.open();
-            return;
           }
         }
 
@@ -99,12 +114,17 @@
           this.close();
           event.stopPropagation();
 
-          this.app.deleteEntity('booking$Category', this.category.id).then(function () {
-            this.dispatchEvent(new CustomEvent('categories-changed', {
-              bubbles: true,
-              composed: true
-            }));
-          }.bind(this));
+          if (!this.demoMode) {
+            this.app.deleteEntity('booking$Category', this.category.id).then(function () {
+              this.dispatchEvent(new CustomEvent('categories-changed', {
+                bubbles: true,
+                composed: true
+              }));
+              this.$.categoryDeleted.show();
+            }.bind(this));
+          } else {
+            this.$.demoMessage.show();
+          }
         }
 
         _cancel(event) {
@@ -113,7 +133,7 @@
 
           this.set('category.name', this._oldName);
 
-          this.dispatchEvent(new CustomEvent('category-cancel', {
+          this.dispatchEvent(new CustomEvent('category-edit-cancel', {
             bubbles: true,
             composed: true,
             detail: {
@@ -125,13 +145,18 @@
         _save(event) {
           this.close();
           event.stopPropagation();
-
-          this.app.commitEntity('booking$Category', this.category).then(function () {
-            this.dispatchEvent(new CustomEvent('categories-changed', {
-              bubbles: true,
-              composed: true
-            }));
-          }.bind(this));
+          
+          if (!this.demoMode) {
+            this.app.commitEntity('booking$Category', this.category).then(function () {
+              this.dispatchEvent(new CustomEvent('categories-changed', {
+                bubbles: true,
+                composed: true
+              }));
+              this.$.categorySaved.show();
+            }.bind(this));
+          } else {
+            this.$.demoMessage.show();
+          }
         }
 
         _computeOldName(category) {

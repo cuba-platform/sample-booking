@@ -12,37 +12,41 @@
         display: block;
       }
 
+      #dialog > h2 {
+        margin-top: 0;
+        padding: 1em 1.5em;
+        color: white;
+        background-color: rgb(33, 150, 243);
+      }
+
       paper-input {
         width: 21em;
       }
 
-      .booking-time {
-        display: flex;
-        align-items: center;
-      }
-
-      .booking-time.margin-bottom {
-        margin-bottom: 0.5em;
-      }
-
-      .booking-time span {
-        width: 100%;
-      }
-
-      .booking-time datetime-picker {
-        flex: 1;
+      .booking-time > div:first-child {
+        font-size: 12px;
+        opacity: 0.87;
       }
 
       datetime-picker {
+        border-bottom: 1px solid var(--secondary-text-color);
+        width: 100%;
+
         --input-picker-color: var(--primary-text-color);
+
+        --input-border-style: none;
         --input-picker-background: var(--primary-background-color);
+
+        --input-focus-border-style: none;
+        --input-focus-background: var(--primary-background-color);
       }
 
       .card-actions {
         text-align: right;
       }
     </style>
-    <paper-dialog id="dialog">
+    <paper-dialog id="dialog"
+                  opened="{{opened}}">
       <h2>[[_getDialogCaption(_booking)]]</h2>
 
       <paper-input value="{{_booking.title}}"
@@ -52,16 +56,16 @@
       </paper-input>
 
       <div class="booking-time margin-bottom">
-        <span>[[msg('booking$Booking.start')]]</span>
+        <div>[[msg('booking$Booking.start')]]</div>
         <datetime-picker id="bookingStartPicker" value="{{_eventStart}}"></datetime-picker>
       </div>
 
       <div class="booking-time">
-        <span>[[msg('booking$Booking.end')]]</span>
+        <div>[[msg('booking$Booking.end')]]</div>
         <datetime-picker id="bookingEndPicker" value="{{_eventEnd}}"></datetime-picker>
       </div>
 
-      <paper-input value="[[_booking.owner.name]]"
+      <paper-input value="[[_booking.owner]]"
                    label="[[msg('booking$Booking.owner')]]"
                    readonly$="[[!_isEditAllowed(_booking)]]"
                    hidden$="[[_isEditAllowed(_booking)]]">
@@ -82,9 +86,14 @@
       </div>
     </paper-dialog>
 
-    <paper-toast id="wrongBookingRange"
-                 horizontal-align="right">
-      Booking should have correct range
+    <paper-toast id="wrongBookingRange" horizontal-align="right">
+      [[msg('Booking should have correct range')]]
+    </paper-toast>
+    <paper-toast id="bookingSaved" horizontal-align="right">
+      [[msg('Booking successfully saved')]]
+    </paper-toast>
+    <paper-toast id="bookingDeleted" horizontal-align="right">
+      [[msg('Booking successfully deleted')]]
     </paper-toast>
   </template>
   <script>
@@ -96,15 +105,13 @@
 
         static get properties() {
           return {
-            _booking: {
-              type: Object,
-              value: function () {
-                return null;
-              }
-            },
-            bookingIdProvider: {
-              type: Object
-            },
+            demoMode: Boolean,
+
+            userInfo: Object,
+
+            opened: Boolean,
+
+            _booking: Object,
             // the following two properties are used to avoid affecting event ranges
             // when datetime picker popup is canceled
             _eventStart: {
@@ -115,16 +122,13 @@
               type: Date,
               computed: '_getEventEnd(_booking)'
             },
-            userInfo: Object
           }
         }
 
         ready() {
           super.ready();
 
-          this.$.dialog.addEventListener('iron-overlay-canceled', () => {
-            this._booking = null
-          });
+          this.$.dialog.addEventListener('iron-overlay-canceled', () => this._cancel());
         }
 
         edit(booking) {
@@ -134,85 +138,59 @@
 
         _delete() {
           this.$.dialog.close();
+          this.$.bookingDeleted.show();
 
-          let fakeId = this._booking.id;
-
-          this.app.deleteEntity('booking$Booking', this._getRealId(fakeId)).then(function () {
-            this.dispatchEvent(new CustomEvent('booking-delete', {
-              bubbles: true,
-              composed: true,
-              detail: fakeId
-            }));
-          }.bind(this));
-
+          this.dispatchEvent(new CustomEvent('booking-deleted', {
+            bubbles: true,
+            composed: true,
+            detail: this._booking
+          }));
           this._booking = null;
         }
 
         _cancel() {
           this.$.dialog.close();
-          this.dispatchEvent(new CustomEvent('booking-cancel', {
+          this.dispatchEvent(new CustomEvent('booking-edit-cancel', {
             bubbles: true,
             composed: true,
             detail: this._booking
           }));
+          this._booking = null
         }
 
         _save() {
-          let bookingStart = this.$.bookingStartPicker.valueAsDate;
-          let bookingEnd = this.$.bookingEndPicker.valueAsDate;
-
-          if (!bookingStart || !bookingEnd || bookingEnd <= bookingStart) {
+          if (!this._validDateRange()) {
             this.$.wrongBookingRange.show();
             return;
+          } else {
+            this.$.dialog.close();
+            this.$.bookingSaved.show();
           }
-          this.$.dialog.close();
 
-          this._booking.start = bookingStart;
-          this._booking.end = bookingEnd;
+          const start = this.$.bookingStartPicker.valueAsDate;
+          const end = this.$.bookingEndPicker.valueAsDate;
 
-          this.app.commitEntity('booking$Booking', this._getBookingToPersist(this._booking)).then(function (committed) {
-            this.dispatchEvent(new CustomEvent('booking-save', {
-              bubbles: true,
-              composed: true,
-              detail: {
-                realId: committed.id,
-                booking: this._booking
-              }
-            }));
-            this._booking = null;
-          }.bind(this));
+          this.dispatchEvent(new CustomEvent('booking-saved', {
+            bubbles: true,
+            composed: true,
+            detail: _updateBooking(this._booking, start, end)
+          }));
+
+          this._booking = null;
+        }
+
+        _validDateRange() {
+          const bookingStart = this.$.bookingStartPicker.valueAsDate;
+          const bookingEnd = this.$.bookingEndPicker.valueAsDate;
+
+          return bookingStart && bookingEnd && bookingEnd > bookingStart;
         }
 
         _getDialogCaption(booking) {
-          return !booking ?
-            '' : !this._getRealId(booking.id) ?
-              'New Booking' : this._isEditAllowed(booking) ?
-                'Edit Booking' : 'View Booking';
-        }
-
-        _isEditAllowed(booking) {
-          return booking && booking.owner && booking.owner.login === this.userInfo.login
-            && booking.start > new Date();
-        }
-
-        _isDeleteAllowed(booking) {
-          return this._isEditAllowed(booking) && !this._isNewBooking(booking);
-        }
-
-        _isNewBooking(booking) {
-          return booking ? !this._getRealId(booking.id) : true;
-        }
-
-        _getBookingToPersist(booking) {
-          let bookingToPersist = Object.assign({}, booking);
-          bookingToPersist.id = this._getRealId(booking.id);
-          bookingToPersist.start = this._formatDate(bookingToPersist.start);
-          bookingToPersist.end = this._formatDate(bookingToPersist.end);
-          return bookingToPersist;
-        }
-
-        _getRealId(fakeId) {
-          return this.bookingIdProvider(fakeId);
+          return !booking ? ''
+            : !booking.entity.id ? 'New Booking'
+              : this._isEditAllowed(booking) ? 'Edit Booking'
+                : 'View Booking';
         }
 
         _getEventStart(booking) {
@@ -223,22 +201,31 @@
           return booking ? booking.end : null;
         }
 
-        _formatDate(date) {
-          if (date) {
-            let formatted = new Date(date);
-
-            let timezoneCorrection = new Date().getTimezoneOffset() / -60;
-            formatted.setHours(formatted.getHours() + timezoneCorrection);
-
-            return formatted.toISOString()
-              .replace('T', ' ')
-              .replace('Z', '');
+        _isEditAllowed(booking) {
+          if (booking) {
+            return booking && booking.owner === this.userInfo.name
+              && booking.start > new Date();
           }
-          return date;
+          return false;
+        }
+
+        _isDeleteAllowed(booking) {
+          return this._isEditAllowed(booking) && !this._isNewBooking(booking);
+        }
+
+        _isNewBooking(booking) {
+          return booking && !booking.entity.id;
         }
       }
 
       customElements.define(BookingEditDialog.is, BookingEditDialog);
+
+      function _updateBooking(booking, start, end) {
+        const merged = Object.assign({}, booking);
+        merged.start = start;
+        merged.end = end;
+        return merged;
+      }
     }
   </script>
 </dom-module>

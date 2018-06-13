@@ -36,11 +36,15 @@
                    on-iron-deselect="_handleItemDeselect">
       <template id="entitiesList" is="dom-repeat" items="{{entities}}">
         <booking-category-inline-editor category="{{item}}"
-                                        on-category-cancel="_handleCancel"
-                                        on-categories-changed="_reload">
+                                        on-category-edit-cancel="_handleCancel"
+                                        on-categories-changed="_reload"
+                                        demo-mode="[[demoMode]]">
         </booking-category-inline-editor>
       </template>
     </iron-selector>
+    <paper-toast id="demoMessage" horizontal-align="right">
+      [[msg('Editing categories is not allowed in demo mode.')]]
+    </paper-toast> 
   </template>
   <script>
     {
@@ -49,13 +53,17 @@
           return 'booking-category-list';
         }
 
+        static get properties() {
+          return { demoMode: Boolean }
+        }
+
         _handleItemSelect(event) {
-          let editor = event.detail.item;
+          const editor = event.detail.item;
           editor.open();
         }
 
         _handleItemDeselect(event) {
-          let editor = event.detail.item;
+          const editor = event.detail.item;
           editor.close();
         }
 
@@ -72,10 +80,14 @@
         }
 
         _createEntity() {
-          let newCategory = {'name': 'New Category'};
-          this.unshift('entities', newCategory);
-          this._selectedCategory = newCategory;
-          this.$.selector.selected = 0;
+          if (!this.demoMode) {
+            const newCategory = {'name': 'New Category'};
+            this.unshift('entities', newCategory);
+            this._selectedCategory = newCategory;
+            this.$.selector.selected = 0;
+          } else {
+            this.$.demoMessage.show();
+          }
         }
       }
 

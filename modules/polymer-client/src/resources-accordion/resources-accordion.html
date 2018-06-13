@@ -9,7 +9,7 @@
 <link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../shared-styles.html">
 
-<dom-module id="booking-accordion">
+<dom-module id="resources-accordion">
   <template>
     <style include="cuba-styles"></style>
     <style include="shared-styles"></style>
@@ -60,9 +60,9 @@
   </template>
   <script>
     {
-      class BookingAccordion extends Polymer.Element {
+      class ResourcesAccordion extends Polymer.Element {
         static get is() {
-          return 'booking-accordion';
+          return 'resources-accordion';
         }
 
         static get properties() {
@@ -118,7 +118,7 @@
         _closeAllTabs(clickedTab) {
           const tabs = this.shadowRoot.querySelectorAll('.booking-category-item');
           for (let i = 0; i < tabs.length; i++) {
-            let tab = tabs[i];
+            const tab = tabs[i];
             if (tab === clickedTab) {
               continue;
             }
@@ -161,7 +161,7 @@
         }
       }
 
-      customElements.define(BookingAccordion.is, BookingAccordion);
+      customElements.define(ResourcesAccordion.is, ResourcesAccordion);
     }
   </script>
 </dom-module>

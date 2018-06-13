@@ -5,4 +5,7 @@
             <param name="resource"/>
         </method>
     </service>
+    <service name="booking_SampleConfigLoadService">
+        <method name="isDemoMode"/>
+    </service>
 </services>

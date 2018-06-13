@@ -15,6 +15,7 @@
 <link rel="import" href="../bower_components/cuba-styles/cuba-styles.html"> 
 <link rel="import" href="../bower_components/cuba-data/cuba-data.html"> 
 <link rel="import" href="../bower_components/cuba-form/cuba-form.html"> 
+<link rel="import" href="../bower_components/cuba-data/cuba-service.html">
 <link rel="import" href="../bower_components/vaadin-combo-box/vaadin-combo-box.html"> 
 <link rel="import" href="../bower_components/vaadin-date-picker/vaadin-date-picker-light.html"> 
 <link rel="import" href="shared-styles.html"> 
@@ -43,6 +44,9 @@
         margin: 12px auto;
         padding: 12px 24px;
       }
+      iron-lazy-pages > booking-calendar-view {
+        max-width: none;
+      }
       @media (max-width: 1366px) {
         iron-lazy-pages > * {
           margin-top: 6px;
@@ -58,6 +62,11 @@
     </style> 
     <cuba-app api-url="[[apiUrl]]" on-cuba-token-expired="_handleTokenExpired"> 
     </cuba-app> 
+    <cuba-service id="sampleConfigService"
+                  service-name="booking_SampleConfigLoadService"
+                  method="isDemoMode"
+                  auto="false">
+    </cuba-service>
     <app-location route="{{route}}" use-hash-as-path></app-location> 
     <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{routeTail}}"> 
     </app-route> 
@@ -70,7 +79,7 @@
         <app-drawer id="drawer" slot="drawer"> 
           <app-toolbar> 
             <div class="title">
-               [[msg('Booking Sample')]]
+               [[msg('Booking')]]
             </div> 
           </app-toolbar> 
           <div class="content fit drawer-content"> 
@@ -87,9 +96,9 @@
           </app-header> 
           <iron-lazy-pages selected="[[_computeSelectedPage(routeData.page)]]" attr-for-selected="data-route" selected-attribute="active" class="content fit"> 
             <booking-home data-route=""></booking-home> 
-            <booking-category-list route="[[routeTail]]" data-route="booking-category-list"></booking-category-list>
-            <booking-resource-management route="[[routeTail]]" data-route="booking-resource-management" on-resources-changed="_refreshMenu"></booking-resource-management>
-            <booking-calendar-view route="[[routeTail]]" data-route="booking-calendar-view"></booking-calendar-view> 
+            <booking-category-list demo-mode="[[demoMode]]" route="[[routeTail]]" data-route="booking-category-list"></booking-category-list>
+            <booking-resource-management demo-mode="[[demoMode]]" route="[[routeTail]]" data-route="booking-resource-management" on-resources-changed="_refreshMenu"></booking-resource-management>
+            <booking-calendar-view demo-mode="[[demoMode]]" route="[[routeTail]]" data-route="booking-calendar-view"></booking-calendar-view> 
           </iron-lazy-pages> 
         </app-header-layout> 
       </app-drawer-layout> 
@@ -109,8 +118,12 @@
 
         static get properties() {
           return {
-            authenticated: Boolean,
-            apiUrl: String
+            authenticated: {
+              type: Boolean,
+              observer: '_authenticatedChanged'
+            },
+            apiUrl: String,
+            demoMode: Boolean
           };
         }
 
@@ -118,6 +131,14 @@
           return [
             '_init(app)'
           ];
+        }
+
+        _authenticatedChanged(authenticated) {
+          if (authenticated) {
+            this.$.sampleConfigService.load().then(function (demoMode) {
+              this.demoMode = demoMode;
+            }.bind(this));
+          }
         }
 
         ready() {
