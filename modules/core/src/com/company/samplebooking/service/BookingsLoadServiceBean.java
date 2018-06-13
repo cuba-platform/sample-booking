@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service(BookingsLoadService.NAME)
 public class BookingsLoadServiceBean implements BookingsLoadService {
@@ -17,7 +18,7 @@ public class BookingsLoadServiceBean implements BookingsLoadService {
     private DataManager dataManager;
 
     @Override
-    public List<Booking> load(Resource resource) {
+    public List<BookingDTO> load(Resource resource) {
         if (resource == null) {
             return Collections.emptyList();
         }
@@ -28,6 +29,10 @@ public class BookingsLoadServiceBean implements BookingsLoadService {
         ctx.setQueryString("select b from booking$Booking b where b.resource.id = :resourceId")
                 .setParameter("resourceId", resource.getId());
 
-        return dataManager.loadList(ctx);
+        return dataManager.secure()
+                .loadList(ctx)
+                .stream()
+                .map(BookingDTO::new)
+                .collect(Collectors.toList());
     }
 }

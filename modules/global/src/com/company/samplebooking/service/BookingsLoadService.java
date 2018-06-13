@@ -1,7 +1,5 @@
 package com.company.samplebooking.service;
 
-
-import com.company.samplebooking.entity.Booking;
 import com.company.samplebooking.entity.Resource;
 
 import java.util.List;
@@ -19,5 +17,5 @@ public interface BookingsLoadService {
      * @param resource resource for which bookings should be loaded
      * @return list of bookings
      */
-    List<Booking> load(Resource resource);
+    List<BookingDTO> load(Resource resource);
 }
