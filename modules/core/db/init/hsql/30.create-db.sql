@@ -142,10 +142,10 @@ values ('b806555e-3e85-75c4-161a-6e444a618e98', null, null, null, null, null, nu
 
 insert into SEC_CONSTRAINT
 (ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, CHECK_TYPE, OPERATION_TYPE, CODE, ENTITY_NAME, JOIN_CLAUSE, WHERE_CLAUSE, GROOVY_SCRIPT, FILTER_XML, IS_ACTIVE, GROUP_ID)
-values ('f7a7a070-f3e6-93c8-5ab2-0508138fa099', 1, '2018-06-05 15:00:50', 'admin', '2018-06-06 14:55:10', 'admin', null, null, 'memory', 'update', null, 'booking$Booking', null, null, '{E}.owner.login == userSession.user.login', null, true, '0fa2b1a5-1d68-4d69-9fbd-dff348347f93');
+values ('f7a7a070-f3e6-93c8-5ab2-0508138fa099', 1, '2018-06-05 15:00:50', 'admin', '2018-06-06 14:55:10', 'admin', null, null, 'memory', 'update', null, 'booking$Booking', null, null, '{E}.owner.id == userSession.user.id', null, true, '0fa2b1a5-1d68-4d69-9fbd-dff348347f93');
 
 insert into SEC_CONSTRAINT
 (ID, VERSION, CREATE_TS, CREATED_BY, UPDATE_TS, UPDATED_BY, DELETE_TS, DELETED_BY, CHECK_TYPE, OPERATION_TYPE, CODE, ENTITY_NAME, JOIN_CLAUSE, WHERE_CLAUSE, GROOVY_SCRIPT, FILTER_XML, IS_ACTIVE, GROUP_ID)
-values ('bcbe47d6-5a82-f59e-1ad9-b8d85131b4df', 1, '2018-06-05 15:50:04', 'admin', '2018-06-06 14:55:16', 'admin', null, null, 'memory', 'delete', null, 'booking$Booking', null, null, '{E}.owner.login == userSession.user.login', null, true, '0fa2b1a5-1d68-4d69-9fbd-dff348347f93');
+values ('bcbe47d6-5a82-f59e-1ad9-b8d85131b4df', 1, '2018-06-05 15:50:04', 'admin', '2018-06-06 14:55:16', 'admin', null, null, 'memory', 'delete', null, 'booking$Booking', null, null, '{E}.owner.id == userSession.user.id', null, true, '0fa2b1a5-1d68-4d69-9fbd-dff348347f93');
 
 -- end Booking UPDATE/DELETE Constraints
