@@ -101,6 +101,8 @@
         close() {
           const editor = this.shadowRoot.querySelector('.inline-editor');
           editor.style.maxHeight = null;
+
+          this.set('category.name', this._oldName);
         }
 
         _handleItemTap(event) {
