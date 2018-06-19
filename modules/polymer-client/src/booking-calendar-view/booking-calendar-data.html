@@ -114,6 +114,12 @@
         booking.start = _formatDate(_applyTimezoneCorrection(bookingWrapper.start));
         booking.end = _formatDate(_applyTimezoneCorrection(bookingWrapper.end));
 
+        // remove redundant fields to avoid problems with deserialization while editing
+        if (booking.id) {
+          delete booking.resource;
+          delete booking.owner;
+        }
+
         return booking;
       }
 
