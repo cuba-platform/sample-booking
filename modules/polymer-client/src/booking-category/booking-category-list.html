@@ -63,16 +63,19 @@
 
         _routeChanged(route) {
           if (route && route.prefix && !route.prefix.includes('booking-category-list')) {
-            const editors = this.shadowRoot.querySelectorAll('booking-category-inline-editor');
-            for (let i = 0; i < editors.length; i++) {
-              editors[i].cancel();
-            }
-            this.$.selector.selected = null;
-
+            this._closeEditors();
             if (this._newEntityExists()) {
               this.shift('entities');
             }
           }
+        }
+
+        _closeEditors() {
+          const editors = this.shadowRoot.querySelectorAll('booking-category-inline-editor');
+          for (let i = 0; i < editors.length; i++) {
+            editors[i].cancel();
+          }
+          this.$.selector.selected = null;
         }
 
         _handleItemSelect(event) {
@@ -98,6 +101,7 @@
         }
 
         _createEntity() {
+          this._closeEditors();
           if (!this.demoMode) {
             if (!this._newEntityExists()) {
               const newCategory = {'name': 'New Category'};
