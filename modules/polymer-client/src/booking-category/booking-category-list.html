@@ -57,6 +57,24 @@
           return { demoMode: Boolean }
         }
 
+        static get observers() {
+          return [ '_routeChanged(route)' ]
+        }
+
+        _routeChanged(route) {
+          if (route && route.prefix && !route.prefix.includes('booking-category-list')) {
+            const editors = this.shadowRoot.querySelectorAll('booking-category-inline-editor');
+            for (let i = 0; i < editors.length; i++) {
+              editors[i].cancel();
+            }
+            this.$.selector.selected = null;
+
+            if (this._newEntityExists()) {
+              this.shift('entities');
+            }
+          }
+        }
+
         _handleItemSelect(event) {
           const editor = event.detail.item;
           editor.open();
@@ -64,7 +82,7 @@
 
         _handleItemDeselect(event) {
           const editor = event.detail.item;
-          editor.close();
+          editor.cancel();
         }
 
         _handleCancel(event) {
@@ -81,13 +99,19 @@
 
         _createEntity() {
           if (!this.demoMode) {
-            const newCategory = {'name': 'New Category'};
-            this.unshift('entities', newCategory);
-            this._selectedCategory = newCategory;
-            this.$.selector.selected = 0;
+            if (!this._newEntityExists()) {
+              const newCategory = {'name': 'New Category'};
+              this.unshift('entities', newCategory);
+              this._selectedCategory = newCategory;
+              this.$.selector.selected = 0;
+            }
           } else {
             this.$.demoMessage.show();
           }
+        }
+
+        _newEntityExists() {
+          return this.entities && this.entities[0] && !this.entities[0].id;
         }
       }
 
