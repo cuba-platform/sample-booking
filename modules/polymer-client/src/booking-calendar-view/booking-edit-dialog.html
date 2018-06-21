@@ -183,7 +183,7 @@
           const bookingStart = this.$.bookingStartPicker.valueAsDate;
           const bookingEnd = this.$.bookingEndPicker.valueAsDate;
 
-          return bookingStart && bookingEnd && bookingEnd > bookingStart;
+          return bookingStart && bookingEnd && bookingStart > new Date() && bookingStart < bookingEnd;
         }
 
         _getDialogCaption(booking) {
