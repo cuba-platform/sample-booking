@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
          version="3.0">
-    
+
     <context-param>
         <description>Web resources version for correct caching in browser</description>
         <param-name>webResourcesTs</param-name>
@@ -13,10 +13,10 @@
     <context-param>
         <param-name>appPropertiesConfig</param-name>
         <param-value>
-            
+
             classpath:com/company/samplebooking/web-app.properties
             /WEB-INF/local.app.properties
-            "file:${catalina.base}/conf/app/local.app.properties"
+            "file:${catalina.base}/conf/booking/local.app.properties"
         </param-value>
     </context-param>
     <!--Application components-->
@@ -33,7 +33,7 @@
     <servlet>
         <servlet-name>app_servlet</servlet-name>
         <servlet-class>com.haulmont.cuba.web.sys.CubaApplicationServlet</servlet-class>
-        
+
         <async-supported>true</async-supported>
     </servlet>
     <servlet>

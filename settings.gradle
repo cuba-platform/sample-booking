@@ -1,5 +1,5 @@
 rootProject.name = 'sample-booking'
-def modulePrefix = 'app'
+def modulePrefix = 'booking'
 include(":${modulePrefix}-global", ":${modulePrefix}-core", ":${modulePrefix}-gui", ":${modulePrefix}-web", ":${modulePrefix}-polymer-client")
 project(":${modulePrefix}-global").projectDir = new File(settingsDir, 'modules/global')
 project(":${modulePrefix}-core").projectDir = new File(settingsDir, 'modules/core')

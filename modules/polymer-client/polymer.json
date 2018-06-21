@@ -18,8 +18,9 @@
   "builds": [
     {
       "preset": "es5-bundled",
-      "basePath": "/app-front/",
+      "basePath": "/booking-front/",
       "addServiceWorker": false
     }
-  ]
+  ],
+  "basePath": "/booking-front/"
 }
