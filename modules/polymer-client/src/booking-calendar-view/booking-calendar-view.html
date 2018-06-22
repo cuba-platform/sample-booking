@@ -113,6 +113,7 @@
           if (resourceId) {
             this.$.resourceData.load().then(function (resource) {
               this._resource = resource;
+              this.$.eventsCalendar.today();
             }.bind(this));
           }
         }
