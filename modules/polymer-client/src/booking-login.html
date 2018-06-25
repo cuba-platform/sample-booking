@@ -56,8 +56,8 @@
         <div class="card-content">
           <iron-icon id="logo" src="images/app-icon/icon-32x32.png"></iron-icon>
           Welcome to Booking
-          <cuba-login on-cuba-login-error="_handleLoginError" username="demo" password="demo">
-            <paper-button slot="login-button" raised class="login-button">Login</paper-button>
+          <cuba-login id="loginForm" on-cuba-login-error="_handleLoginError" username="demo" password="demo">
+            <paper-button id="loginButton" slot="login-button" raised class="login-button">Login</paper-button>
           </cuba-login>
         </div>
       </paper-card>
@@ -79,6 +79,15 @@
 
         _handleLoginError() {
           this.$.loginError.show();
+        }
+
+        ready() {
+          super.ready();
+
+          // temporary fix for Firefox due to webcomponents/shadydom#252
+          if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+            this.$.loginButton.addEventListener('click', () => this.$.loginForm.submit());
+          }
         }
       }
 
