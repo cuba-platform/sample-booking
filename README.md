@@ -53,3 +53,6 @@ Please check Wiki for further reading:
 #### Category Editor
 
 ![Category Editor](./img/category-editor.png)
+
+## Issues
+Please use https://www.cuba-platform.com/discuss for discussion, support, and reporting problems coressponding to this sample.
